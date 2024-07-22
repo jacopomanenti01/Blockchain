@@ -29,20 +29,27 @@ import {
         <NavigationMenuList
         className="hidden md:flex md:space-x-4">
 
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Listing</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                
-                <ListItem  title="Featured">
-                    Invest on the hottest songs/albums.
+<NavigationMenuItem>
+      <NavigationMenuTrigger>Listing</NavigationMenuTrigger>
+      <NavigationMenuContent>
+        <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+          <li>
+            <Link href="/collection" >
+              
+                <ListItem title="Featured">
+                  Invest on the hottest songs/albums.
                 </ListItem>
-                <ListItem  title="Learn More">
-                  Learn how to invest in music and what you are going to buy.
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
+              
+            </Link>
+          </li>
+          <li>
+            <ListItem title="Learn More">
+              Learn how to invest in music and what you are going to buy.
+            </ListItem>
+          </li>
+        </ul>
+      </NavigationMenuContent>
+    </NavigationMenuItem>
 
           <NavigationMenuItem>
             <NavigationMenuTrigger>Stats</NavigationMenuTrigger>
