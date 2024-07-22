@@ -15,7 +15,7 @@ import {
   import { MdVerified } from "react-icons/md";
   import { TiTick } from "react-icons/ti";
 
-  const Filter = () => {
+  const smallFilter = () => {
     const [filter, setFilter] = useState(true);
     const [image, setImage] = useState(true);
     const [video, setVideo] = useState(true);
@@ -127,4 +127,4 @@ import {
   )
 }
 
-export default Filter
+export default smallFilter

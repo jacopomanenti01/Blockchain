@@ -134,7 +134,7 @@ const NFTDescription = () => {
               onClick={() => openNFTMenu()}
             />
 
-            //{NFTMenu && (
+            {NFTMenu && (
               <div className={Style.NFTDescription_box_share_box_social}>
                 <a href="#">
                   <BiDollar /> Change price

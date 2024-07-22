@@ -43,9 +43,11 @@ import {
             </Link>
           </li>
           <li>
+          <Link href="/NFTdetalis" >
             <ListItem title="Learn More">
               Learn how to invest in music and what you are going to buy.
             </ListItem>
+          </Link>
           </li>
         </ul>
       </NavigationMenuContent>

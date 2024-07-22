@@ -1,24 +1,16 @@
 "use client"
-import React from "react";
+import Filter from '@/components/stats/filter'
+import Navbar from '@/components/navbar/page'
+import React from 'react'
 
-//INTERNAL IMPORT
-import  { NFTDescription, NFTDetailsImg, NFTTabs }  from "@/components/NFTcardDetails/NFTDetailsIndex";
-import Style from "@/components/NFTcardDetails/NFTDetailsPage.module.css";
-import Navbar from "@/components/navbar/page";
 
-const Nftpage = () => {
+function page() {
   return (
     <div>
-    <Navbar/>
-    <div className={Style.NFTDetailsPage}>
-      <div className={Style.NFTDetailsPage_box}>
-      
-      <NFTDetailsImg />
-        <NFTDescription />
-      </div>
+      <Navbar />
+      <Filter />
     </div>
-  </div>
-  );
-};
+  )
+}
 
-export default Nftpage;
+export default page
