@@ -79,10 +79,12 @@ const ActionButtons = () => {
                 <IoWalletOutline />
                     Log in
                 </Button>
+                <Link href="/mint">
                 <Button
                 className="text-md bg-blue-500">
                     <CgProfile className="text-3xl" />
                 </Button>
+                </Link>
 
             </div>
  

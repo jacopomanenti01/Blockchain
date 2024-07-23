@@ -51,7 +51,7 @@ import {
           </li>
         </ul>
       </NavigationMenuContent>
-    </NavigationMenuItem>
+  </NavigationMenuItem>
 
           <NavigationMenuItem>
             <NavigationMenuTrigger>Stats</NavigationMenuTrigger>
@@ -69,11 +69,11 @@ import {
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <Link href="/" legacyBehavior passHref>
+            <Link href="/mint" legacyBehavior passHref>
               <NavigationMenuLink
               className="font-medium"
               >
-                Publish
+                Create
               </NavigationMenuLink>
             </Link>
           </NavigationMenuItem>

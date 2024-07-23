@@ -4,6 +4,7 @@ import SecondSection from "./components/hero/page";
 import Nftcards from "./components/collections/nftcards";
 
 
+
 export default function Home() {
   return <div>
     <Navbar />

@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {images: {
+      const nextConfig = {experimental: {
+        serverActions: true,
+      },
+  images: {
     remotePatterns: [
       {
         protocol: 'https',
