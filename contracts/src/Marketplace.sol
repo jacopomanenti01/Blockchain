@@ -29,7 +29,10 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     // MarketPlace Fee 
     uint256 public mpFeesPercentage;
 
+    uint256 private orderCounter;
+    mapping(uint256 => Order) public orders;
     mapping(uint256 => bool) public usedOrderIds;
+
 
     /**
      * @notice Initializer
@@ -61,6 +64,50 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         mpFeesPercentage = _newMPFeesPercentage;
         emit NewMPFees(mpFeesPercentage);
     }
+
+    function createOrder(
+        address _collection,
+        uint256 _tokenId,
+        uint256 _amount,
+        uint256 _price,
+        address _paymentToken
+    ) external {
+        require(_amount > 0, "Amount must be greater than 0");
+        IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
+
+        orderCounter++;
+        orders[orderCounter] = Order(orderCounter, _paymentToken, _price, _amount, _tokenId, msg.sender, _collection);
+        emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
+    }
+
+    function buy(uint256 _orderId, uint256 _buyAmount) external payable nonReentrant {
+        Order storage order = orders[_orderId];
+        require(order.id != 0, "Order does not exist");
+        require(!usedOrderIds[_orderId], "Order ID already completely filled");
+        require(_buyAmount <= order.amount, "Not enough tokens to buy");
+
+        uint256 totalPrice = order.price * _buyAmount;
+        uint256 platformFee = (totalPrice * mpFeesPercentage) / PERCENT_DIVIDER;
+        uint256 sellerAmount = totalPrice - platformFee;
+
+        if (order.paymentToken == address(0)) {
+            require(msg.value >= totalPrice, "Insufficient funds");
+            payable(mpFeesCollector).transfer(platformFee);
+            payable(order.owner).transfer(sellerAmount);
+        } else {
+            IERC20(order.paymentToken).safeTransferFrom(msg.sender, mpFeesCollector, platformFee);
+            IERC20(order.paymentToken).safeTransferFrom(msg.sender, order.owner, sellerAmount);
+        }
+
+        IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
+        order.amount -= _buyAmount;
+        if (order.amount == 0) {
+            delete orders[_orderId];
+        }
+
+        emit OrderFilled(_orderId, msg.sender, _buyAmount);
+    }
+
 
     /**
      * @dev builds a prefixed hash to mimic the behavior of eth_sign.
@@ -136,6 +183,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
                 value2String(_order.tokenId), address2String(_order.owner), address2String(_order.collection));
         return originalMsg;
     }
+
     
     // INTERNAL METHODS
     /**
