@@ -10,7 +10,10 @@ export default function Home() {
     <Navbar />
     <SecondSection />
     <Carousel />
-    <smallFilter />
+    <div className="p-2 bg-gray-200 rounded-lg ml-16 mr-16">
+  <h1 className="text-[3.5rem] font-bold mb-10 leading-[1.167]">Featured Listing</h1>
+</div>
+
     <Nftcards />
   </div>;
 }
