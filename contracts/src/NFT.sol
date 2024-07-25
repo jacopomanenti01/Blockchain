@@ -25,11 +25,11 @@ Metadati devono contenere:
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
-contract NFT is ERC1155, AccessControl, ERC1155Supply {
+import "openzeppelin-contracts/contracts/access/AccessControl.sol";
+import "openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+
+contract NFT is ERC1155Supply, AccessControl {
     struct Singer {
         string stageName;
         string description;
@@ -54,7 +54,7 @@ contract NFT is ERC1155, AccessControl, ERC1155Supply {
     uint256 private albumIdCounter;
     uint256 private recordCompanyFee;
 
-    constructor() ERC1155("") { 
+    constructor(string memory _name) ERC1155(_name) ERC1155Supply() { 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(RECORD_COMPANY_ROLE, msg.sender);
         _grantRole(WE_ROLE, msg.sender);
@@ -94,7 +94,11 @@ contract NFT is ERC1155, AccessControl, ERC1155Supply {
         return albums[_id].metadataUrl;
     }
 
-    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) internal override(ERC1155, ERC1155Supply) {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    function supportsInterface(bytes4 _interfaceId) public view virtual override(AccessControl, ERC1155) returns (bool) {
+       return super.supportsInterface(_interfaceId);
     }
+
+    // function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) internal override(ERC1155, ERC1155Supply) {
+    //     super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    // }
 }
