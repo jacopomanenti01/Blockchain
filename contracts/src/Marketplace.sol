@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
@@ -18,10 +18,10 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         uint256 id;     // order ID, starting from 1
         address paymentToken; // if token is address(0), it means native coin
         uint256 price; // sell price for single token
-        uint256 amount; // 1 for ERC721, 1 or more for ERC1155
+        uint256 amount; // 1 or more for ERC1155
         uint256 tokenId;
         address owner; // address that creates the listing
-        address collection;  // erc721 or erc1155 address
+        address collection;  // NFT address
     }
 
     // Marketplace variables
