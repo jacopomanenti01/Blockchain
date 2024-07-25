@@ -1,11 +1,13 @@
 
 
 
+import { useAccount } from "wagmi";
 import ActionButtons from "./action-buttons";
 import Logo from "./logo";
 import { NavigationMenuBar } from "./navigation-bar";
 
 const Navbar = () => {
+    const {isConnected, address} = useAccount()
     return ( <div className="
     flex
     justify-between

@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { IoWalletOutline } from "react-icons/io5";
 import { CgProfile } from "react-icons/cg";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import {
     Sheet,
@@ -21,13 +22,9 @@ const ActionButtons = () => {
     return ( 
     <div>
         <div className="md:hidden inline-flex space-x-4">
-            <Button
-                className="inline-flex items-center border-0 bg-inherit text-[100%] bg-[#d1cfcf]"
-                variant="ghost"
-                >
-                <IoWalletOutline />
-                    Log in
-                </Button>
+        <div className="inline-flex items-center border-0 bg-inherit text-[70%] bg-[#d1cfcf] md:max-w-xs lg:max-w-sm">
+                <ConnectButton/>
+                </div>
             <Sheet>
                 <SheetTrigger>
                     <AlignJustify />
@@ -72,13 +69,10 @@ const ActionButtons = () => {
 
 
             <div className="hidden md:flex md:space-x-4">
-                <Button
-                className="inline-flex items-center border-0 bg-inherit text-[100%] bg-[#d1cfcf]"
-                variant="ghost"
-                >
-                <IoWalletOutline />
-                    Log in
-                </Button>
+                <div className="inline-flex items-center border-0 bg-inherit text-[70%] bg-[#d1cfcf] md:max-w-xs lg:max-w-sm">
+                <ConnectButton/>
+                </div>
+                
                 <Link href="/mint">
                 <Button
                 className="text-md bg-blue-500">
