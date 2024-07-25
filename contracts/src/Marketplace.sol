@@ -12,14 +12,14 @@ import "./interfaces/IMarketplace.sol";
 contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     using SafeERC20 for IERC20;
 
-    uint256 public constant PERCENT_DIVIDER = 1000000;  // percentage divider, 6 decimals
+    uint public constant PERCENT_DIVIDER = 1000000;  // percentage divider, 6 decimals
 
     struct Order {
-        uint256 id;     // order ID, starting from 1
+        uint id;     // order ID, starting from 1
         address paymentToken; // if token is address(0), it means native coin
-        uint256 price; // sell price for single token
-        uint256 amount; // 1 or more for ERC1155
-        uint256 tokenId;
+        uint price; // sell price for single token
+        uint amount; // 1 or more for ERC1155
+        uint tokenId;
         address owner; // address that creates the listing
         address collection;  // NFT address
     }
@@ -27,11 +27,11 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     // Marketplace variables
     address public mpFeesCollector;
     // MarketPlace Fee 
-    uint256 public mpFeesPercentage;
+    uint public mpFeesPercentage;
 
-    uint256 private orderCounter;
-    mapping(uint256 => Order) public orders;
-    mapping(uint256 => bool) public usedOrderIds;
+    uint private orderCounter;
+    mapping(uint => Order) public orders;
+    mapping(uint => bool) public usedOrderIds;
 
 
     /**
@@ -39,7 +39,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _mpFeesCollector Address that collects marketplace fees
      * @param _mpFeesPercentage marketplace fees percentage (scaled by 10^6)
      */
-    constructor(address _mpFeesCollector, uint256 _mpFeesPercentage) {
+    constructor(address _mpFeesCollector, uint _mpFeesPercentage) {
         mpFeesCollector = _mpFeesCollector;
         mpFeesPercentage = _mpFeesPercentage;
 
@@ -60,16 +60,16 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @notice set a new marketplace fees (scaled by 1000000) (DEFAULT_ADMIN_ROLE)
      * @param _newMPFeesPercentage new marketplace fees percentage (scaled by 10^6)
      */
-    function setMarketPlaceFee(uint256 _newMPFeesPercentage) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMarketPlaceFee(uint _newMPFeesPercentage) external onlyRole(DEFAULT_ADMIN_ROLE) {
         mpFeesPercentage = _newMPFeesPercentage;
         emit NewMPFees(mpFeesPercentage);
     }
 
     function createOrder(
         address _collection,
-        uint256 _tokenId,
-        uint256 _amount,
-        uint256 _price,
+        uint _tokenId,
+        uint _amount,
+        uint _price,
         address _paymentToken
     ) external {
         require(_amount > 0, "Amount must be greater than 0");
@@ -77,18 +77,19 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         orderCounter++;
         orders[orderCounter] = Order(orderCounter, _paymentToken, _price, _amount, _tokenId, msg.sender, _collection);
+
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
     }
 
-    function buy(uint256 _orderId, uint256 _buyAmount) external payable nonReentrant {
+    function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
         require(order.id != 0, "Order does not exist");
         require(!usedOrderIds[_orderId], "Order ID already completely filled");
         require(_buyAmount <= order.amount, "Not enough tokens to buy");
 
-        uint256 totalPrice = order.price * _buyAmount;
-        uint256 platformFee = (totalPrice * mpFeesPercentage) / PERCENT_DIVIDER;
-        uint256 sellerAmount = totalPrice - platformFee;
+        uint totalPrice = order.price * _buyAmount;
+        uint platformFee = (totalPrice * mpFeesPercentage) / PERCENT_DIVIDER;
+        uint sellerAmount = totalPrice - platformFee;
 
         if (order.paymentToken == address(0)) {
             require(msg.value >= totalPrice, "Insufficient funds");
@@ -108,6 +109,22 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit OrderFilled(_orderId, msg.sender, _buyAmount);
     }
 
+    /**
+     * @dev cancel an order by returning the tokens to the seller.
+     * @param _id id of the order to cancel.
+     */
+    function cancel(uint _id) external {
+        require(_id < orderCounter, "Invalid order id");
+
+        Order memory order = orders[_id];
+        require(order.owner == msg.sender, "Not token owner");
+
+        IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
+
+        delete orders[_id];
+
+        emit OrderCancelled(_id);
+    }
 
     /**
      * @dev builds a prefixed hash to mimic the behavior of eth_sign.
@@ -165,11 +182,11 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     }
 
     /**
-     * @dev convert an uint256 to string
+     * @dev convert an uint to string
      * @param value value to be converted in string
      * @return value value converted in lowercase string
      */
-    function value2String(uint256 value) public pure returns(string memory) {
+    function value2String(uint value) public pure returns(string memory) {
         return Strings.toString(value);
     }
 
@@ -191,12 +208,12 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _price price to be paid
      * @param _seller seller address
      */
-    function processNativePayment(uint256 _price, address _seller) internal {
+    function processNativePayment(uint _price, address _seller) internal {
         require (msg.value >= _price, "Not enough funds");
 
         // Platform Fees
         bool success;
-        uint256 platformFee;
+        uint platformFee;
         if (mpFeesPercentage > 0) {
             platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
             // process platform fee payment
@@ -206,13 +223,13 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         }
 
         // transfer payment
-        uint256 sellerAmount = _price - platformFee;
+        uint sellerAmount = _price - platformFee;
         (success, ) = (_seller).call{value: sellerAmount}("");
         require(success, "Transfer failed to seller.");
         // payable(_seller).transfer(sellerAmount);
 
         // Refund excess funds
-        uint256 remainingFunds = msg.value - _price;
+        uint remainingFunds = msg.value - _price;
         if (remainingFunds > 0) {
             (success, ) = (_msgSender()).call{value: remainingFunds}("");
             require(success, "Transfer failed to buyer.");
@@ -226,11 +243,11 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _price price to be paid
      * @param _seller seller address
      */
-    function processPayment(address _token, uint256 _price, address _seller) internal {
+    function processPayment(address _token, uint _price, address _seller) internal {
         IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
 
         // Fees
-        uint256 platformFee;
+        uint platformFee;
         if (mpFeesPercentage > 0) {
             platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
             // process fee payment
@@ -238,7 +255,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         }
 
         // transfer payment
-        uint256 sellerAmount = _price - platformFee;
+        uint sellerAmount = _price - platformFee;
         IERC20(_token).safeTransfer(_seller, sellerAmount);
     }
 }
