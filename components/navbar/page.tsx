@@ -1,6 +1,6 @@
 
 
-
+"use client"
 import { useAccount } from "wagmi";
 import ActionButtons from "./action-buttons";
 import Logo from "./logo";

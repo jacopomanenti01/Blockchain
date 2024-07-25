@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   darkTheme,
@@ -21,7 +21,7 @@ import {
 
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
-  projectId: 'YOUR_PROJECT_ID',
+  projectId: 'b2743a254972ed0a3d3d0ff1e32a3966',
   chains: [mainnet, polygon, optimism, arbitrum, base],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
