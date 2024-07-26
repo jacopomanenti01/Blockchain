@@ -22,9 +22,9 @@ const ActionButtons = () => {
     return ( 
     <div>
         <div className="md:hidden inline-flex space-x-4">
-        <div className="inline-flex items-center border-0 bg-inherit text-[70%] bg-[#d1cfcf] md:max-w-xs lg:max-w-sm">
+            <div className="inline-flex items-center border-0 bg-inherit text-[70%] bg-[#d1cfcf] md:max-w-xs lg:max-w-sm">
                 <ConnectButton/>
-                </div>
+            </div>
             <Sheet>
                 <SheetTrigger>
                     <AlignJustify />

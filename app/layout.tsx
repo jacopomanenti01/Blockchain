@@ -18,7 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={font.className}>
-        <CustomProvider>{children}</CustomProvider></body>
+        <CustomProvider>{children}</CustomProvider>
+      </body>
     </html>
   )
 }
