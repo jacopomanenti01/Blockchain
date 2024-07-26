@@ -11,4 +11,8 @@ interface IMarketplace {
     event OrderCancelled(uint indexed orderId);
 
     event OrderFilled(uint indexed orderId, address indexed buyer, uint amount);
+
+    event NewAuction(uint indexed orderId, uint basePrice, uint minIncrement, uint deadline);
+    event NewBid(uint indexed orderId, address indexed bidder, uint bidAmount);
+    event AuctionEnded(uint indexed orderId, address indexed winner, uint winningBid);
 }

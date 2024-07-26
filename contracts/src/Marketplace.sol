@@ -14,14 +14,26 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     uint public constant PERCENT_DIVIDER = 1000000;  // percentage divider, 6 decimals
 
-    struct Order {
-        uint id;     // order ID, starting from 1
+    struct Order { // single order listed on the marketplace
+        uint orderId;     // order ID, starting from 1
         address paymentToken; // if token is address(0), it means native coin
         uint price; // sell price for single token
         uint amount; // 1 or more for ERC1155
         uint tokenId;
         address owner; // address that creates the listing
         address collection;  // NFT address
+    }
+
+    struct Auction { // auction details for a single order
+        uint auctionId;     // auction ID, starting from 1
+        address paymentToken; // if token is address(0), it means native coin
+        uint basePrice;
+        uint minIncrement;
+        uint deadline;
+        uint highestBid;
+        address owner; // address that creates the listing
+        address collection;  // NFT address
+        address highestBidder;
     }
 
     // Marketplace variables
@@ -31,7 +43,9 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     uint private orderCounter;
     mapping(uint => Order) public orders;
+    mapping(uint => Auction) public auctions;
     mapping(uint => bool) public usedOrderIds;
+    mapping(uint => bool) public isAuction;
 
 
     /**
@@ -80,6 +94,73 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
     }
+
+    function createAuction(
+        address _collection,
+        uint _tokenId,
+        uint _amount,
+        uint _basePrice,
+        uint _minIncrement,
+        uint _deadline, // deadline as Unix timestamp
+        address _paymentToken
+    ) external {
+        require(_amount > 0, "Amount must be greater than 0");
+        require(_deadline > block.timestamp, "Deadline must be in the future");
+
+        IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
+
+        orderCounter++;
+        orders[orderCounter] = Order(orderCounter, _paymentToken, _basePrice, _amount, _tokenId, msg.sender, _collection);
+        auctions[orderCounter] = Auction(_basePrice, _minIncrement, _deadline, 0, address(0));
+        isAuction[orderCounter] = true;
+
+        emit NewAuction(orderCounter, _basePrice, _minIncrement, _deadline);
+    }
+
+    function bid(uint _orderId) external payable nonReentrant {
+        require(isAuction[_orderId], "Order is not an auction");
+        Auction storage auction = auctions[_orderId];
+        require(block.timestamp < auction.deadline, "Auction has ended");
+        require(msg.value >= auction.basePrice, "Bid must be at least base price");
+        require(msg.value >= auction.highestBid + auction.minIncrement, "Bid increment is too low");
+
+        if (auction.highestBidder != address(0)) {
+            payable(auction.highestBidder).transfer(auction.highestBid);
+        }
+
+        auction.highestBid = msg.value;
+        auction.highestBidder = msg.sender;
+
+        emit NewBid(_orderId, msg.sender, msg.value);
+    }
+
+    function endAuction(uint _orderId) external nonReentrant {
+        require(isAuction[_orderId], "Order is not an auction");
+        Auction storage auction = auctions[_orderId];
+        require(block.timestamp >= auction.deadline, "Auction is still ongoing");
+
+        Order storage order = orders[_orderId];
+
+        uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
+        uint sellerAmount = auction.highestBid - platformFee;
+
+        if (order.paymentToken == address(0)) {
+            payable(mpFeesCollector).transfer(platformFee);
+            payable(order.owner).transfer(sellerAmount);
+        } else {
+            IERC20(order.paymentToken).safeTransfer(mpFeesCollector, platformFee);
+            IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
+        }
+
+        IERC1155(order.collection).safeTransferFrom(address(this), auction.highestBidder, order.tokenId, order.amount, "");
+        
+        delete orders[_orderId];
+        delete auctions[_orderId];
+        delete isAuction[_orderId];
+
+        emit AuctionEnded(_orderId, auction.highestBidder, auction.highestBid);
+    }
+
 
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
