@@ -12,7 +12,7 @@ interface IMarketplace {
 
     event OrderFilled(uint indexed orderId, address indexed buyer, uint amount);
 
-    event NewAuction(uint indexed orderId, uint basePrice, uint minIncrement, uint deadline);
-    event NewBid(uint indexed orderId, address indexed bidder, uint bidAmount);
-    event AuctionEnded(uint indexed orderId, address indexed winner, uint winningBid);
+    event NewAuction(uint indexed auctionId, uint basePrice, uint minIncrement, uint deadline);
+    event NewBid(uint indexed auctionId, address indexed bidder, uint bidAmount);
+    event AuctionEnded(uint indexed auctionId, address indexed winner, uint winningBid);
 }

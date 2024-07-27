@@ -42,6 +42,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     uint public mpFeesPercentage;
 
     uint private orderCounter;
+    uint private auctionCounter;
+
     mapping(uint => Order) public orders;
     mapping(uint => Auction) public auctions;
     mapping(uint => bool) public usedOrderIds;
@@ -109,17 +111,16 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
-        orderCounter++;
-        orders[orderCounter] = Order(orderCounter, _paymentToken, _basePrice, _amount, _tokenId, msg.sender, _collection);
-        auctions[orderCounter] = Auction(_basePrice, _minIncrement, _deadline, 0, address(0));
-        isAuction[orderCounter] = true;
+        auctionCounter++;
+        auctions[auctionCounter] = Auction(auctionCounter, _paymentToken, _basePrice, _minIncrement, _deadline, 0, msg.sender, _collection, address(0));
+        isAuction[auctionCounter] = true;
 
-        emit NewAuction(orderCounter, _basePrice, _minIncrement, _deadline);
+        emit NewAuction(auctionCounter, _basePrice, _minIncrement, _deadline);
     }
 
-    function bid(uint _orderId) external payable nonReentrant {
-        require(isAuction[_orderId], "Order is not an auction");
-        Auction storage auction = auctions[_orderId];
+    function bid(uint _auctionId) external payable nonReentrant {
+        require(isAuction[_auctionId], "Order is not an auction");
+        Auction storage auction = auctions[_auctionId];
         require(block.timestamp < auction.deadline, "Auction has ended");
         require(msg.value >= auction.basePrice, "Bid must be at least base price");
         require(msg.value >= auction.highestBid + auction.minIncrement, "Bid increment is too low");
@@ -131,34 +132,31 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         auction.highestBid = msg.value;
         auction.highestBidder = msg.sender;
 
-        emit NewBid(_orderId, msg.sender, msg.value);
+        emit NewBid(_auctionId, msg.sender, msg.value);
     }
 
-    function endAuction(uint _orderId) external nonReentrant {
-        require(isAuction[_orderId], "Order is not an auction");
-        Auction storage auction = auctions[_orderId];
+    function endAuction(uint _auctionId) external nonReentrant {
+        require(isAuction[_auctionId], "Order is not an auction");
+        Auction storage auction = auctions[_auctionId];
         require(block.timestamp >= auction.deadline, "Auction is still ongoing");
-
-        Order storage order = orders[_orderId];
 
         uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
         uint sellerAmount = auction.highestBid - platformFee;
 
-        if (order.paymentToken == address(0)) {
+        if (auction.paymentToken == address(0)) {
             payable(mpFeesCollector).transfer(platformFee);
-            payable(order.owner).transfer(sellerAmount);
+            payable(auction.owner).transfer(sellerAmount);
         } else {
-            IERC20(order.paymentToken).safeTransfer(mpFeesCollector, platformFee);
-            IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
+            IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
+            IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
         }
 
-        IERC1155(order.collection).safeTransferFrom(address(this), auction.highestBidder, order.tokenId, order.amount, "");
+        IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, 1, "");
         
-        delete orders[_orderId];
-        delete auctions[_orderId];
-        delete isAuction[_orderId];
+        delete auctions[_auctionId];
+        delete isAuction[_auctionId];
 
-        emit AuctionEnded(_orderId, auction.highestBidder, auction.highestBid);
+        emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
     }
 
 
