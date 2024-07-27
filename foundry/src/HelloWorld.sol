@@ -9,8 +9,8 @@ contract HelloWorld {
     greeting = _greeting;
   }
 
-  function greet() public view returns(string memory) {
-    return greeting;
+  function greet() public view returns(string memory, uint ) {
+    return (greeting,version);
   }
 
   function updateGreeting(string memory _greeting) public {
