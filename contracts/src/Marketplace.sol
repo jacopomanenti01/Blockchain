@@ -118,21 +118,29 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit NewAuction(auctionCounter, _basePrice, _minIncrement, _deadline);
     }
 
-    function bid(uint _auctionId) external payable nonReentrant {
+    function bid(uint _auctionId, uint _amount) external payable nonReentrant {
         require(isAuction[_auctionId], "Order is not an auction");
+        
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp < auction.deadline, "Auction has ended");
-        require(msg.value >= auction.basePrice, "Bid must be at least base price");
-        require(msg.value >= auction.highestBid + auction.minIncrement, "Bid increment is too low");
+        require(_amount >= auction.basePrice, "Bid must be at least base price");
+        require(_amount >= auction.highestBid + auction.minIncrement, "Bid increment is too low");
 
+        // Take the payment from the caller. If present, repay previous bidder
         if (auction.highestBidder != address(0)) {
-            payable(auction.highestBidder).transfer(auction.highestBid);
+            if (auction.paymentToken == address(0)) {
+                payable(auction.highestBidder).transfer(auction.highestBid);
+                require(msg.value == _amount, "Insufficient funds");
+            } else {
+                IERC20(auction.paymentToken).safeTransfer(auction.highestBidder, auction.highestBid);
+                IERC20(auction.paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
+            }
         }
 
-        auction.highestBid = msg.value;
+        auction.highestBid = _amount;
         auction.highestBidder = msg.sender;
 
-        emit NewBid(_auctionId, msg.sender, msg.value);
+        emit NewBid(_auctionId, msg.sender, _amount);
     }
 
     function endAuction(uint _auctionId) external nonReentrant {
