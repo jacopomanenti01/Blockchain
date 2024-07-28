@@ -162,7 +162,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
-        require(order.id != 0, "Order does not exist");
+        require(order.orderId != 0, "Order does not exist");
         require(!usedOrderIds[_orderId], "Order ID already completely filled");
         require(_buyAmount <= order.amount, "Not enough tokens to buy");
 
@@ -275,7 +275,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @return originalMsg order converted in lowercase string
      */
     function restoreMsg(Order calldata _order) public pure returns (string memory) {
-        string memory originalMsg = string.concat(value2String(_order.id), address2String(_order.paymentToken), value2String(_order.price), value2String(_order.amount),
+        string memory originalMsg = string.concat(value2String(_order.orderId), address2String(_order.paymentToken), value2String(_order.price), value2String(_order.amount),
                 value2String(_order.tokenId), address2String(_order.owner), address2String(_order.collection));
         return originalMsg;
     }
