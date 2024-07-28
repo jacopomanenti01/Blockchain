@@ -1,7 +1,8 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
-import CustomProvider from './providers'
+import '@rainbow-me/rainbowkit/styles.css';
+import { Providers } from './providers';
 
 const font = Outfit({ subsets: ['latin'] })
 
@@ -18,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={font.className}>
-        <CustomProvider>{children}</CustomProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
