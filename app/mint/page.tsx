@@ -1,7 +1,7 @@
 import React from 'react'
 import MintComponent from '@/components/createNFT/mint';
 import Navbar from '@/components/navbar/page';
-import {MintNFT} from '@/components/createNFT/pr';
+import {MintNFT} from "../config"
 
 function page() {
   return (
