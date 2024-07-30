@@ -2,85 +2,49 @@
 import * as React from 'react';
 import {
   RainbowKitProvider,
-  getDefaultWallets,
-  connectorsForWallets,
+  getDefaultConfig,
   Chain,
 } from '@rainbow-me/rainbowkit';
+import { WagmiProvider } from 'wagmi';
 import {
-  argentWallet,
-  trustWallet,
-  ledgerWallet,
-} from '@rainbow-me/rainbowkit/wallets';
-import { configureChains, createConfig, WagmiConfig } from 'wagmi';
+  QueryClientProvider,
+  QueryClient,
+} from "@tanstack/react-query";
 import {
-  goerli,
+  sepolia,
 } from 'wagmi/chains';
-import { publicProvider } from 'wagmi/providers/public';
 
-// configure anvil chain
-const anvil: Chain = {
-    id: 31_337,
-    name: "Anvil Local",
-    network: "anvil",
-    nativeCurrency: {
-        decimals: 18,
-        name: "tETH",
-        symbol: "tETH"
-    },
-    rpcUrls: {
-        public: { http: ["http://localhost:8545"]},
-        default: { http: ["http://localhost:8545"]},
-    },
-    testnet: true
-}
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [
-    anvil,
-    goerli,
-  ],
-  [publicProvider()]
-);
 
-const projectId = 'YOUR_PROJECT_ID';
+const anvil = {
+  id: 31_337,
+  name: "Anvil Local",
+  iconBackground: '#fff',
+  nativeCurrency: { name: 'TETTE', symbol: 'TT', decimals: 18 },
+  rpcUrls: {
+    public: { http: ["http://localhost:8545"]},
+    default: { http: ["http://localhost:8545"]},
+  },testnet: true
+} as const satisfies Chain;
 
-const { wallets } = getDefaultWallets({
-  appName: 'RainbowKit demo',
-  projectId,
-  chains,
+export const config = getDefaultConfig({
+  appName: 'My RainbowKit App',
+  projectId: 'YOUR_PROJECT_ID',
+  chains: [anvil, sepolia],
 });
 
-const demoAppInfo = {
-  appName: 'Rainbowkit Demo',
-};
-
-const connectors = connectorsForWallets([
-  ...wallets,
-  {
-    groupName: 'Other',
-    wallets: [
-      argentWallet({ projectId, chains }),
-      trustWallet({ projectId, chains }),
-      ledgerWallet({ projectId, chains }),
-    ],
-  },
-]);
-
-const wagmiConfig = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-  webSocketPublicClient,
-});
+const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider chains={chains} appInfo={demoAppInfo}>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
         {mounted && children}
-      </RainbowKitProvider>
-    </WagmiConfig>
+                </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
