@@ -53,9 +53,9 @@ contract NFT is ERC1155Supply, AccessControl {
     uint256 private albumIdCounter;
     uint256 private recordCompanyFee;
 
-    constructor(string memory _name) ERC1155(_name) ERC1155Supply() { 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(RECORD_COMPANY_ROLE, msg.sender);
+    constructor(string memory _name, address _recordCompanyAdmin) ERC1155(_name) ERC1155Supply() { 
+        _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // Due to the factory
+        _grantRole(RECORD_COMPANY_ROLE, _recordCompanyAdmin);
     }
 
     function createSinger(
