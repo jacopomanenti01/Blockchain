@@ -30,6 +30,7 @@ import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 import "./interfaces/INFT.sol";
+import "./interfaces/INFTFactory.sol";
 
 contract NFT is ERC1155Supply, AccessControl, INFT {
     struct Singer {
@@ -57,11 +58,15 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
 
     address public treasury;
 
+    INFTFactory public factory;
+
     constructor(string memory _name, address _recordCompanyAdmin, address _treasury) ERC1155(_name) ERC1155Supply() { 
         _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // Due to the factory
         _grantRole(RECORD_COMPANY_ROLE, _recordCompanyAdmin);
 
         treasury = _treasury;
+
+        factory = INFTFactory(msg.sender);
     }
 
     function createSinger(
@@ -104,6 +109,22 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
 
     function supportsInterface(bytes4 _interfaceId) public view virtual override(AccessControl, ERC1155) returns (bool) {
        return super.supportsInterface(_interfaceId);
+    }
+
+    function grantRole(bytes32 _role, address _account) public override onlyRole(getRoleAdmin(_role)) {
+        _grantRole(_role, _account);
+
+        if (_role == RECORD_COMPANY_ROLE) {
+            factory.setAssociatedNFT(_account, address(this));
+        }
+    }
+
+    function revokeRole(bytes32 _role, address _account) public override onlyRole(getRoleAdmin(_role)) {
+        _revokeRole(_role, _account);
+
+        if (_role == RECORD_COMPANY_ROLE) {
+            factory.setAssociatedNFT(_account, address(0));
+        }
     }
 
 }
