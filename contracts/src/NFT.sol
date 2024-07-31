@@ -29,7 +29,9 @@ pragma solidity ^0.8.0;
 import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
-contract NFT is ERC1155Supply, AccessControl {
+import "./interfaces/INFT.sol";
+
+contract NFT is ERC1155Supply, AccessControl, INFT {
     struct Singer {
         string stageName;
         string description;
@@ -51,11 +53,15 @@ contract NFT is ERC1155Supply, AccessControl {
 
     uint256 private singerIdCounter;
     uint256 private albumIdCounter;
-    uint256 private recordCompanyFee;
+    uint256 public recordCompanyFee;
 
-    constructor(string memory _name, address _recordCompanyAdmin) ERC1155(_name) ERC1155Supply() { 
+    address public treasury;
+
+    constructor(string memory _name, address _recordCompanyAdmin, address _treasury) ERC1155(_name) ERC1155Supply() { 
         _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // Due to the factory
         _grantRole(RECORD_COMPANY_ROLE, _recordCompanyAdmin);
+
+        treasury = _treasury;
     }
 
     function createSinger(
@@ -85,6 +91,10 @@ contract NFT is ERC1155Supply, AccessControl {
 
     function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         recordCompanyFee = _newFee;
+    }
+
+    function updateRecordTreasury(address _treasury) external onlyRole(RECORD_COMPANY_ROLE) {
+        treasury = _treasury;
     }
 
     function uri(uint256 _id) public view override returns (string memory) {

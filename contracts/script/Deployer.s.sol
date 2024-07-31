@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {Script, console} from "forge-std/Script.sol";
+import {NFTFactory} from "../src/NFTFactory.sol";
 import {Marketplace} from "../src/Marketplace.sol";
 
-contract MarketplaceScript is Script {
+contract DeployerScript is Script {
+    NFTFactory public factory;
     Marketplace public marketplace;
 
     // TODO: Update with our wallet
@@ -17,7 +19,8 @@ contract MarketplaceScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        marketplace = new Marketplace(feesCollector, feesPercentage);
+        factory = new NFTFactory();
+        marketplace = new Marketplace(address(factory), feesCollector, feesPercentage);
 
         vm.stopBroadcast();
     }

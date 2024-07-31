@@ -8,6 +8,8 @@ import "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 import "./interfaces/IMarketplace.sol";
+import "./interfaces/INFTFactory.sol";
+import "./interfaces/INFT.sol";
 
 contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     using SafeERC20 for IERC20;
@@ -44,6 +46,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     uint private orderCounter;
     uint private auctionCounter;
 
+    INFTFactory public nftFactory;
+
     mapping(uint => Order) public orders;
     mapping(uint => Auction) public auctions;
     mapping(uint => bool) public usedOrderIds;
@@ -52,15 +56,26 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     /**
      * @notice Initializer
-     * @param _mpFeesCollector Address that collects marketplace fees
+     * @param _nftFactory address of the NFT factory
+     * @param _mpFeesCollector address that collects marketplace fees
      * @param _mpFeesPercentage marketplace fees percentage (scaled by 10^6)
      */
-    constructor(address _mpFeesCollector, uint _mpFeesPercentage) {
+    constructor(address _nftFactory, address _mpFeesCollector, uint _mpFeesPercentage) {
+        nftFactory = INFTFactory(_nftFactory);
+
         mpFeesCollector = _mpFeesCollector;
         mpFeesPercentage = _mpFeesPercentage;
 
         // add deployer as admin
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    }
+
+    /**
+     * @notice update the address of the nft factory
+     * @param _newFactory address of the new factory
+     */
+    function setNFTFactory(address _newFactory) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        nftFactory = INFTFactory(_newFactory);
     }
 
     /**
@@ -89,6 +104,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         address _paymentToken
     ) external {
         require(_amount > 0, "Amount must be greater than 0");
+        require(nftFactory.isFactoryDeployed(_collection), "Invalid collection");
+
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
         orderCounter++;
@@ -108,6 +125,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     ) external {
         require(_amount > 0, "Amount must be greater than 0");
         require(_deadline > block.timestamp, "Deadline must be in the future");
+        require(nftFactory.isFactoryDeployed(_collection), "Invalid collection");
 
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
@@ -118,21 +136,37 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit NewAuction(auctionCounter, _basePrice, _minIncrement, _deadline);
     }
 
-    function bid(uint _auctionId) external payable nonReentrant {
+    function bid(uint _auctionId, uint _amount) external payable nonReentrant {
         require(isAuction[_auctionId], "Order is not an auction");
+
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp < auction.deadline, "Auction has ended");
-        require(msg.value >= auction.basePrice, "Bid must be at least base price");
-        require(msg.value >= auction.highestBid + auction.minIncrement, "Bid increment is too low");
 
-        if (auction.highestBidder != address(0)) {
-            payable(auction.highestBidder).transfer(auction.highestBid);
+        if (auction.paymentToken == address(0)) {
+            _amount = msg.value;
         }
 
-        auction.highestBid = msg.value;
+        require(_amount >= auction.basePrice, "Bid must be at least base price");
+        require(_amount >= auction.highestBid + auction.minIncrement, "Bid increment is too low");
+
+        // Refund previous bidder
+        if (auction.highestBidder != address(0)) {
+            if (auction.paymentToken == address(0)) {
+                payable(auction.highestBidder).transfer(auction.highestBid);
+            } else {
+                IERC20(auction.paymentToken).safeTransfer(auction.highestBidder, auction.highestBid);
+            }
+        }
+
+        // Process payment
+        if (auction.paymentToken != address(0)) {
+            IERC20(auction.paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
+        }
+
+        auction.highestBid = _amount;
         auction.highestBidder = msg.sender;
 
-        emit NewBid(_auctionId, msg.sender, msg.value);
+        emit NewBid(_auctionId, msg.sender, _amount);
     }
 
     function endAuction(uint _auctionId) external nonReentrant {
@@ -140,14 +174,18 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp >= auction.deadline, "Auction is still ongoing");
 
+        INFT nft = INFT(auction.collection);
         uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
-        uint sellerAmount = auction.highestBid - platformFee;
+        uint recordCompanyFee = (auction.highestBid * nft.recordCompanyFee()) / PERCENT_DIVIDER;
+        uint sellerAmount = auction.highestBid - platformFee - recordCompanyFee;
 
         if (auction.paymentToken == address(0)) {
             payable(mpFeesCollector).transfer(platformFee);
+            payable(nft.treasury()).transfer(recordCompanyFee);
             payable(auction.owner).transfer(sellerAmount);
         } else {
             IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
+            IERC20(auction.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
             IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
         }
 
@@ -166,17 +204,21 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         require(!usedOrderIds[_orderId], "Order ID already completely filled");
         require(_buyAmount <= order.amount, "Not enough tokens to buy");
 
+        INFT nft = INFT(order.collection);
         uint totalPrice = order.price * _buyAmount;
         uint platformFee = (totalPrice * mpFeesPercentage) / PERCENT_DIVIDER;
-        uint sellerAmount = totalPrice - platformFee;
+        uint recordCompanyFee = (totalPrice * nft.recordCompanyFee()) / PERCENT_DIVIDER;
+        uint sellerAmount = totalPrice - platformFee - recordCompanyFee;
 
         if (order.paymentToken == address(0)) {
             require(msg.value >= totalPrice, "Insufficient funds");
             payable(mpFeesCollector).transfer(platformFee);
+            payable(nft.treasury()).transfer(recordCompanyFee);
             payable(order.owner).transfer(sellerAmount);
         } else {
-            IERC20(order.paymentToken).safeTransferFrom(msg.sender, mpFeesCollector, platformFee);
-            IERC20(order.paymentToken).safeTransferFrom(msg.sender, order.owner, sellerAmount);
+            IERC20(order.paymentToken).safeTransfer(mpFeesCollector, platformFee);
+            IERC20(order.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
+            IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
         }
 
         IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
@@ -205,80 +247,80 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit OrderCancelled(_id);
     }
 
-    /**
-     * @dev builds a prefixed hash to mimic the behavior of eth_sign.
-     * @param _string hashed message
-     * @return hash prefixed hashed message
-     */
-    function msgHash(string memory _string) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_string));
-    }
+    // /**
+    //  * @dev builds a prefixed hash to mimic the behavior of eth_sign.
+    //  * @param _string hashed message
+    //  * @return hash prefixed hashed message
+    //  */
+    // function msgHash(string memory _string) public pure returns (bytes32) {
+    //     return keccak256(abi.encodePacked(_string));
+    // }
 
-    /**
-     * @dev builds a prefixed hash to mimic the behavior of eth_sign.
-     * @param _hash hashed message
-     * @return hash prefixed hashed message
-     */
-    function ethMsgHash(bytes32 _hash) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
-    }
+    // /**
+    //  * @dev builds a prefixed hash to mimic the behavior of eth_sign.
+    //  * @param _hash hashed message
+    //  * @return hash prefixed hashed message
+    //  */
+    // function ethMsgHash(bytes32 _hash) public pure returns (bytes32) {
+    //     return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
+    // }
 
-    /**
-     * @dev recover the original address that signed a prefixed message
-     * @param _ethHash prefixed hashed message
-     * @param _sig message signature
-     * @return address signature signed address
-     */
-    function recover(bytes32 _ethHash, bytes calldata _sig) public pure returns (address) {
-        (bytes32 r, bytes32 s, uint8 v) = splitSig(_sig);
-        return ecrecover(_ethHash, v, r, s);
-    }
+    // /**
+    //  * @dev recover the original address that signed a prefixed message
+    //  * @param _ethHash prefixed hashed message
+    //  * @param _sig message signature
+    //  * @return address signature signed address
+    //  */
+    // function recover(bytes32 _ethHash, bytes calldata _sig) public pure returns (address) {
+    //     (bytes32 r, bytes32 s, uint8 v) = splitSig(_sig);
+    //     return ecrecover(_ethHash, v, r, s);
+    // }
 
-    /**
-     * @dev split a signature in r, s, and v components
-     * @param _sig message signature
-     * @return r signature component
-     * @return s signature component
-     * @return v signature component
-     */
-    function splitSig(bytes memory _sig) internal pure returns(bytes32 r, bytes32 s, uint8 v) {
-        require(_sig.length == 65, "Invalid sig length");
-        assembly {
-            r := mload(add(_sig, 0x20))
-            s := mload(add(_sig, 0x40))
-            v := byte(0, mload(add(_sig, 0x60)))
-        }
-        // return (r,s,v);
-    }
+    // /**
+    //  * @dev split a signature in r, s, and v components
+    //  * @param _sig message signature
+    //  * @return r signature component
+    //  * @return s signature component
+    //  * @return v signature component
+    //  */
+    // function splitSig(bytes memory _sig) internal pure returns(bytes32 r, bytes32 s, uint8 v) {
+    //     require(_sig.length == 65, "Invalid sig length");
+    //     assembly {
+    //         r := mload(add(_sig, 0x20))
+    //         s := mload(add(_sig, 0x40))
+    //         v := byte(0, mload(add(_sig, 0x60)))
+    //     }
+    //     // return (r,s,v);
+    // }
 
-    /**
-     * @dev convert an address to string
-     * @param account account to be converted in string
-     * @return account account converted in lowercase string
-     */
-    function address2String(address account) public pure returns(string memory) {
-        return Strings.toHexString(account);
-    }
+    // /**
+    //  * @dev convert an address to string
+    //  * @param account account to be converted in string
+    //  * @return account account converted in lowercase string
+    //  */
+    // function address2String(address account) public pure returns(string memory) {
+    //     return Strings.toHexString(account);
+    // }
 
-    /**
-     * @dev convert an uint to string
-     * @param value value to be converted in string
-     * @return value value converted in lowercase string
-     */
-    function value2String(uint value) public pure returns(string memory) {
-        return Strings.toString(value);
-    }
+    // /**
+    //  * @dev convert an uint to string
+    //  * @param value value to be converted in string
+    //  * @return value value converted in lowercase string
+    //  */
+    // function value2String(uint value) public pure returns(string memory) {
+    //     return Strings.toString(value);
+    // }
 
-    /**
-     * @dev convert an order structure to string
-     * @param _order order struct to be converted in string
-     * @return originalMsg order converted in lowercase string
-     */
-    function restoreMsg(Order calldata _order) public pure returns (string memory) {
-        string memory originalMsg = string.concat(value2String(_order.orderId), address2String(_order.paymentToken), value2String(_order.price), value2String(_order.amount),
-                value2String(_order.tokenId), address2String(_order.owner), address2String(_order.collection));
-        return originalMsg;
-    }
+    // /**
+    //  * @dev convert an order structure to string
+    //  * @param _order order struct to be converted in string
+    //  * @return originalMsg order converted in lowercase string
+    //  */
+    // function restoreMsg(Order calldata _order) public pure returns (string memory) {
+    //     string memory originalMsg = string.concat(value2String(_order.orderId), address2String(_order.paymentToken), value2String(_order.price), value2String(_order.amount),
+    //             value2String(_order.tokenId), address2String(_order.owner), address2String(_order.collection));
+    //     return originalMsg;
+    // }
 
     
     // INTERNAL METHODS
