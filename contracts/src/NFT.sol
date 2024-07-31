@@ -44,7 +44,6 @@ contract NFT is ERC1155Supply, AccessControl {
     }
 
     bytes32 public constant RECORD_COMPANY_ROLE = keccak256("RECORD_COMPANY_ROLE");
-    bytes32 public constant WE_ROLE = keccak256("WE_ROLE");
 
     mapping(uint256 => Singer) public singers;
     mapping(uint256 => Album) public albums;
@@ -57,7 +56,6 @@ contract NFT is ERC1155Supply, AccessControl {
     constructor(string memory _name) ERC1155(_name) ERC1155Supply() { 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(RECORD_COMPANY_ROLE, msg.sender);
-        _grantRole(WE_ROLE, msg.sender);
     }
 
     function createSinger(
@@ -85,7 +83,7 @@ contract NFT is ERC1155Supply, AccessControl {
         // Marketplace contract address should be passed and managed appropriately
     }
 
-    function updateRecordCompanyFee(uint256 _newFee) external onlyRole(WE_ROLE) {
+    function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         recordCompanyFee = _newFee;
     }
 
@@ -98,7 +96,4 @@ contract NFT is ERC1155Supply, AccessControl {
        return super.supportsInterface(_interfaceId);
     }
 
-    // function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) internal override(ERC1155, ERC1155Supply) {
-    //     super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-    // }
 }

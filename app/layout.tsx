@@ -20,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={font.className}>
         <Providers>{children}</Providers>
+        
       </body>
     </html>
   )
