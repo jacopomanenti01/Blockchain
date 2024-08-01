@@ -20,15 +20,9 @@ contract NFTFactory is AccessControl, INFTFactory {
      * @param _recordCompanyAdmin Initial record company admin address
      * @param _treasury Record company treasury
      */
-<<<<<<< Updated upstream
     function deployNFT(string memory _uri, address _recordCompanyAdmin, address _treasury) external onlyRole(DEFAULT_ADMIN_ROLE) {
         NFT nft = new NFT(_uri, _recordCompanyAdmin, _treasury);
 
-=======
-    function deployNFT(string memory _name, address _recordCompanyAdmin, address _treasury) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        NFT nft = new NFT(_name, _recordCompanyAdmin, _treasury);
-        //----posso utilizzare lo stesso address per deployare il contratt0
->>>>>>> Stashed changes
         isFactoryDeployed[address(nft)] = true;
         associatedNFT[_recordCompanyAdmin] = address(nft);
 
