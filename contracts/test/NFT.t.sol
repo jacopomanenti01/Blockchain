@@ -80,7 +80,7 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_TreasuryUpdateAccess(address _attacker) public {
+    function testFuzz_TreasuryUpdateAccess(address _attacker) public {
         vm.expectRevert();
 
         // caller is the deployer
@@ -100,7 +100,7 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_RecordCompanyFeeUpdateAccess(address _attacker) public {
+    function testFuzz_RecordCompanyFeeUpdateAccess(address _attacker) public {
         vm.expectRevert();
         vm.startPrank(_attacker);
 
@@ -120,7 +120,10 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_CustomGrantRoleAccess(address _attacker) public {
+    function testFuzz_CustomGrantRoleAccess(address _attacker) public {
+        vm.assume(_attacker != recordCompanyAdmin);
+        vm.assume(_attacker != owner);
+
         vm.startPrank(_attacker);
 
         bytes32 role = nft.RECORD_COMPANY_ROLE();
@@ -134,7 +137,7 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_CustomGrantRoleRecordCompany(address _newAdmin) public {
+    function testFuzz_CustomGrantRoleRecordCompany(address _newAdmin) public {
         vm.startPrank(recordCompanyAdmin);
 
         nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
@@ -144,7 +147,7 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_CustomGrantRoleRDefaultAdmin(address _newAdmin) public {
+    function testFuzz_CustomGrantRoleRDefaultAdmin(address _newAdmin) public {
         vm.startPrank(owner);
 
         nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
@@ -154,7 +157,10 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_CustomRevokeRoleAccess(address _attacker) public {
+    function testFuzz_CustomRevokeRoleAccess(address _attacker) public {
+        vm.assume(_attacker != recordCompanyAdmin);
+        vm.assume(_attacker != owner);
+
         vm.startPrank(_attacker);
 
         bytes32 role = nft.RECORD_COMPANY_ROLE();
@@ -168,7 +174,7 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_CustomRevokeRoleRecordCompany(address _newAdmin) public {
+    function testFuzz_CustomRevokeRoleRecordCompany(address _newAdmin) public {
         vm.startPrank(recordCompanyAdmin);
         
         nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
@@ -179,9 +185,8 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
-    function test_CustomRevokeRoleRDefaultAdmin(address _newAdmin) public {
+    function testFuzz_CustomRevokeRoleRDefaultAdmin(address _newAdmin) public {
         vm.startPrank(owner);
-
 
         nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
         nft.revokeRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
