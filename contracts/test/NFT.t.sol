@@ -120,4 +120,75 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
+    function test_CustomGrantRoleAccess(address _attacker) public {
+        vm.startPrank(_attacker);
+
+        bytes32 role = nft.RECORD_COMPANY_ROLE();
+        vm.expectRevert();
+        nft.grantRole(role, _attacker);
+
+        role = nft.DEFAULT_ADMIN_ROLE();
+        vm.expectRevert();
+        nft.grantRole(role, _attacker);
+
+        vm.stopPrank();
+    }
+
+    function test_CustomGrantRoleRecordCompany(address _newAdmin) public {
+        vm.startPrank(recordCompanyAdmin);
+
+        nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
+
+        assertEq(factory.associatedNFT(_newAdmin), address(nft), "Broken nft association to new admin");
+
+        vm.stopPrank();
+    }
+
+    function test_CustomGrantRoleRDefaultAdmin(address _newAdmin) public {
+        vm.startPrank(owner);
+
+        nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
+
+        assertEq(factory.associatedNFT(_newAdmin), address(0), "Creates NFT association but it is not needed");
+
+        vm.stopPrank();
+    }
+
+    function test_CustomRevokeRoleAccess(address _attacker) public {
+        vm.startPrank(_attacker);
+
+        bytes32 role = nft.RECORD_COMPANY_ROLE();
+        vm.expectRevert();
+        nft.revokeRole(role, _attacker);
+
+        role = nft.DEFAULT_ADMIN_ROLE();
+        vm.expectRevert();
+        nft.revokeRole(role, _attacker);
+
+        vm.stopPrank();
+    }
+
+    function test_CustomRevokeRoleRecordCompany(address _newAdmin) public {
+        vm.startPrank(recordCompanyAdmin);
+        
+        nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
+        nft.revokeRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
+
+        assertEq(factory.associatedNFT(_newAdmin), address(0), "Broken nft association to new admin");
+
+        vm.stopPrank();
+    }
+
+    function test_CustomRevokeRoleRDefaultAdmin(address _newAdmin) public {
+        vm.startPrank(owner);
+
+
+        nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
+        nft.revokeRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
+
+        assertEq(factory.associatedNFT(_newAdmin), address(0), "Creates NFT association but it is not needed");
+
+        vm.stopPrank();
+    }
+
 }
