@@ -60,8 +60,8 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
 
     INFTFactory public factory;
 
-    constructor(string memory _uri, address _recordCompanyAdmin, address _treasury) ERC1155(_uri) ERC1155Supply() { 
-        _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // Due to the factory
+    constructor(address _recordCompanyAdmin, address _treasury) ERC1155("") ERC1155Supply() { 
+        _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // tx.origin since facotry is deploying this
         _grantRole(RECORD_COMPANY_ROLE, _recordCompanyAdmin);
 
         treasury = _treasury;

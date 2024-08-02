@@ -12,11 +12,9 @@ contract NFTTest is Test {
     address public recordCompanyAdmin = address(0x1);
     address public treasury = address(0x2);
 
-    string public baseUri = "https://.../";
-
     function setUp() public {
         factory = new NFTFactory();
-        factory.deployNFT(baseUri, recordCompanyAdmin, treasury);
+        factory.deployNFT(recordCompanyAdmin, treasury);
 
         nft = NFT(factory.associatedNFT(recordCompanyAdmin));
     }
