@@ -38,6 +38,7 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         string description;
         string genre;
         string imageUrl;
+        bool exists;
     }
 
     struct Album {
@@ -52,8 +53,8 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
     mapping(uint256 => Album) public albums;
     mapping(string => bool) private singerExists;
 
-    uint256 private singerIdCounter;
-    uint256 private albumIdCounter;
+    uint256 public singerIdCounter;
+    uint256 public albumIdCounter;
     uint256 public recordCompanyFee;
 
     address public treasury;
@@ -76,9 +77,15 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         string memory _imageUrl
     ) external onlyRole(RECORD_COMPANY_ROLE) {
         require(!singerExists[_stageName], "Singer already exists");
+
+        Singer storage singer = singers[singerIdCounter];
+        singer.stageName = _stageName;
+        singer.description = _description;
+        singer.genre = _genre;
+        singer.imageUrl = _imageUrl;
+        singer.exists = true;
+
         singerIdCounter++;
-        singers[singerIdCounter] = Singer(_stageName, _description, _genre, _imageUrl);
-        singerExists[_stageName] = true;
     }
 
     function createAlbum(
@@ -86,12 +93,20 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         uint256 _singerId,
         string memory _metadataUrl
     ) external onlyRole(RECORD_COMPANY_ROLE) {
-        require(bytes(singers[_singerId].stageName).length > 0, "Singer does not exist");
-        albumIdCounter++;
-        albums[albumIdCounter] = Album(_shareCount, _singerId, _metadataUrl);
+        require(singers[_singerId].exists, "Singer does not exist");
+
+        
+        Album storage album = albums[albumIdCounter];
+        album.metadataUrl = _metadataUrl;
+        album.singerId = _singerId;
+        album.shareCount = _shareCount;
+
         _mint(msg.sender, albumIdCounter, _shareCount, "");
+
         // Add the marketplace address to the whitelist
         // Marketplace contract address should be passed and managed appropriately
+
+        albumIdCounter++;
     }
 
     function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
