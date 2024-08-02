@@ -17,7 +17,7 @@ contract NFTTest is Test {
         owner = msg.sender;
 
         factory = new NFTFactory();
-        factory.deployNFT(recordCompanyAdmin, treasury);
+        factory.deployNFT("Test", recordCompanyAdmin, treasury);
 
         nft = NFT(factory.associatedNFT(recordCompanyAdmin));
     }

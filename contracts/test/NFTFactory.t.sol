@@ -21,12 +21,13 @@ contract NFTFactoryTest is Test {
 
     function test_Deployment() public {
         // Deploy new contract
-        factory.deployNFT(recordCompanyAdmin, treasury);
+        factory.deployNFT("Name", recordCompanyAdmin, treasury);
 
         // Save nft object for later tests
         nft = NFT(factory.associatedNFT(recordCompanyAdmin));
 
         assertNotEq(address(nft), address(0), "Contract not deployed");
+        assertEq(nft.name(), "Name", "Incorrect name");
         assertEq(nft.hasRole(nft.RECORD_COMPANY_ROLE(), recordCompanyAdmin), true, "Record company admin misses role");
         assertEq(nft.hasRole(nft.DEFAULT_ADMIN_ROLE(), msg.sender), true, "Owner admin misses role");
     }

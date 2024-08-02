@@ -57,16 +57,19 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
     uint256 public albumIdCounter;
     uint256 public recordCompanyFee;
 
+    string public name;
+
     address public treasury;
 
     INFTFactory public factory;
 
-    constructor(address _recordCompanyAdmin, address _treasury) ERC1155("") ERC1155Supply() { 
+    constructor(string memory _name, address _recordCompanyAdmin, address _treasury) ERC1155("") ERC1155Supply() { 
         _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // tx.origin since facotry is deploying this
         _grantRole(RECORD_COMPANY_ROLE, _recordCompanyAdmin);
         _setRoleAdmin(RECORD_COMPANY_ROLE, RECORD_COMPANY_ROLE); // Only record company can manage its accounts
 
         treasury = _treasury;
+        name = _name;
 
         factory = INFTFactory(msg.sender);
     }
