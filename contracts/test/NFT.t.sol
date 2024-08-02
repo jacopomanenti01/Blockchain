@@ -11,8 +11,11 @@ contract NFTTest is Test {
 
     address public recordCompanyAdmin = address(0x1);
     address public treasury = address(0x2);
+    address public owner;
 
     function setUp() public {
+        owner = msg.sender;
+
         factory = new NFTFactory();
         factory.deployNFT(recordCompanyAdmin, treasury);
 
@@ -77,5 +80,44 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
+    function test_TreasuryUpdateAccess(address _attacker) public {
+        vm.expectRevert();
+
+        // caller is the deployer
+        vm.startPrank(_attacker);
+        nft.updateRecordTreasury(address(5));
+        vm.stopPrank();
+    }
+
+    function test_TreasuryUpdate() public {
+        vm.startPrank(recordCompanyAdmin);
+
+        // caller is the deployer
+        nft.updateRecordTreasury(address(5));
+
+        assertEq(nft.treasury(), address(5), "Incorrect treasury");
+
+        vm.stopPrank();
+    }
+
+    function test_RecordCompanyFeeUpdateAccess(address _attacker) public {
+        vm.expectRevert();
+        vm.startPrank(_attacker);
+
+        nft.updateRecordCompanyFee(1000);
+
+        vm.stopPrank();
+    }
+
+    function test_RecordCompanyFeeUpdate() public {
+        vm.startPrank(owner);
+
+        // caller is the deployer
+        nft.updateRecordCompanyFee(1000);
+
+        assertEq(nft.recordCompanyFee(), 1000);
+
+        vm.stopPrank();
+    }
 
 }
