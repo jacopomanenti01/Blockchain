@@ -14,7 +14,7 @@ contract NFTFactory is AccessControl, INFTFactory {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    /**
+    /**P
      * @dev Deploy a new NFT contract for a record company.
      * @param _uri Base uri
      * @param _recordCompanyAdmin Initial record company admin address

@@ -12,7 +12,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 
-import {deploy} from "../schema/deploy"
+import {deploy} from "@/backend/schema/deploy"
 import { useForm } from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ import {abi as FactoryAbi} from "../../contracts/out/NFTFactory.sol/NFTFactory.j
 function page() {
 
   const [loading, setLoading] = useState(false)
+  const [cid, setCid] = useState("");
+
 
   const form = useForm({
     resolver: zodResolver(deploy),
@@ -38,26 +40,34 @@ function page() {
     }
   })
 
-  const onSubmit = (data: z.infer<typeof deploy>)=>{
-    setLoading(true)
-    const provider = new providers.Web3Provider(window.ethereum)
-    const signer = provider.getSigner()
-    const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
+  const onSubmit = async(data: z.infer<typeof deploy>)=>{
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      
+      // Create blob dal JSON
+      const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
 
-    async function prova(){
-      try{
-      const tx = await contract.deployNFT(data.recordName,data.recordAddress,data.recordTreasury)
-      await tx.wait()
-      console.log(tx.hash)
-      setLoading(false)
-      }catch{
-        alert("nuuuuuuu")
-        setLoading(false)
-      }
+      formData.append("file", jsonBlob, "file.json");
+
+
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+
+      const resData = await res.json();
+      
+      setCid(resData.IpfsHash);
+      setLoading(false);
+    } catch (e) {
+      console.log(e);
+      setLoading(false);
+      alert("Trouble uploading file");
     }
-    prova()
-
-  }
+  };
 
 
   return (
