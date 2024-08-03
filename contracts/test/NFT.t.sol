@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {Test, console} from "forge-std/Test.sol";
 import {NFT} from "../src/NFT.sol";
 import {NFTFactory} from "../src/NFTFactory.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract NFTTest is Test {
     NFTFactory public factory;
@@ -45,6 +46,35 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
+    function test_SingerGetter() public {
+        vm.startPrank(recordCompanyAdmin);
+
+        for (uint i = 0; i < 10; i++) { 
+            nft.createSinger(string.concat("Name_", Strings.toString(i)), "Desc", "Genre", "https://...");
+        }
+
+        vm.stopPrank();
+        
+        NFT.Singer[] memory singers = nft.getSingers(0, nft.singerIdCounter());
+
+        assertEq(singers.length, 10, "Incorrect array length");
+        for (uint i = 0; i < 10; i++) { 
+            assertEq(singers[i].stageName, string.concat("Name_", Strings.toString(i)), "Incorrect name");
+            assertEq(singers[i].description, "Desc", "Incorrect description");
+            assertEq(singers[i].genre, "Genre", "Incorrect genre");
+            assertEq(singers[i].imageUrl, "https://...", "Incorrect image url");
+            assertEq(singers[i].exists, true, "Singer does not exist");
+        }
+
+        vm.expectRevert("Invalid parameters");
+        singers = nft.getSingers(1, 0);
+    }
+
+    function test_SingerGetterAccess() public {
+        vm.expectRevert();
+        nft.getSingers(0, 100);
+    }
+
     function test_AlbumCreationAccess() public {
         vm.expectRevert();
 
@@ -81,6 +111,8 @@ contract NFTTest is Test {
     }
 
     function testFuzz_TreasuryUpdateAccess(address _attacker) public {
+        vm.assume(! nft.hasRole(nft.RECORD_COMPANY_ROLE(), _attacker));
+        
         vm.expectRevert();
 
         // caller is the deployer
@@ -101,6 +133,8 @@ contract NFTTest is Test {
     }
 
     function testFuzz_RecordCompanyFeeUpdateAccess(address _attacker) public {
+        vm.assume(! nft.hasRole(nft.DEFAULT_ADMIN_ROLE(), _attacker));
+
         vm.expectRevert();
         vm.startPrank(_attacker);
 
@@ -138,6 +172,8 @@ contract NFTTest is Test {
     }
 
     function testFuzz_CustomGrantRoleRecordCompany(address _newAdmin) public {
+        vm.assume(factory.associatedNFT(_newAdmin) == address(0));
+        
         vm.startPrank(recordCompanyAdmin);
 
         nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
@@ -150,9 +186,11 @@ contract NFTTest is Test {
     }
 
     function testFuzz_CustomGrantRoleRDefaultAdmin(address _newAdmin) public {
-        vm.startPrank(owner);
+        vm.assume(factory.associatedNFT(_newAdmin) == address(0));
 
+        vm.startPrank(owner);
         nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
+
         assertEq(factory.associatedNFT(_newAdmin), address(0), "Creates NFT association but it is not needed");
 
         // Cleanup
@@ -179,6 +217,8 @@ contract NFTTest is Test {
     }
 
     function testFuzz_CustomRevokeRoleRecordCompany(address _newAdmin) public {
+        vm.assume(factory.associatedNFT(_newAdmin) == address(0));
+
         vm.startPrank(recordCompanyAdmin);
         
         nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
@@ -190,6 +230,8 @@ contract NFTTest is Test {
     }
 
     function testFuzz_CustomRevokeRoleRDefaultAdmin(address _newAdmin) public {
+        vm.assume(factory.associatedNFT(_newAdmin) == address(0));
+
         vm.startPrank(owner);
 
         nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);

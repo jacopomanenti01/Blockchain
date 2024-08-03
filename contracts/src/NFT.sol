@@ -113,6 +113,22 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         albumIdCounter++;
     }
 
+    /**
+     * @notice returns an arraay with the singers in the specified range
+     * @param _start starting index (inclusive)
+     * @param _end ending index (exclusive)
+     */
+    function getSingers(uint _start, uint _end) public view returns (Singer[] memory) {
+        require(_end <= singerIdCounter, "Invalid end");
+        require(_end >= _start, "Invalid parameters");
+
+        Singer[] memory array = new Singer[](_end - _start);
+        for (uint i = _start; i < _end; i++) {
+            array[i - _start] = singers[i];
+        }
+        return array;
+    }
+
     function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         recordCompanyFee = _newFee;
     }
