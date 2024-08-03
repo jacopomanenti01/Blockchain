@@ -141,8 +141,10 @@ contract NFTTest is Test {
         vm.startPrank(recordCompanyAdmin);
 
         nft.grantRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
-
         assertEq(factory.associatedNFT(_newAdmin), address(nft), "Broken nft association to new admin");
+
+        // Cleanup
+        nft.revokeRole(nft.RECORD_COMPANY_ROLE(), _newAdmin);
 
         vm.stopPrank();
     }
@@ -151,8 +153,10 @@ contract NFTTest is Test {
         vm.startPrank(owner);
 
         nft.grantRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
-
         assertEq(factory.associatedNFT(_newAdmin), address(0), "Creates NFT association but it is not needed");
+
+        // Cleanup
+        nft.revokeRole(nft.DEFAULT_ADMIN_ROLE(), _newAdmin);
 
         vm.stopPrank();
     }
