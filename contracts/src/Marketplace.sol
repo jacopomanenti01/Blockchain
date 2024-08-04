@@ -329,34 +329,34 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _price price to be paid
      * @param _seller seller address
      */
-    function processNativePayment(uint _price, address _seller) internal {
-        require (msg.value >= _price, "Not enough funds");
+    // function processNativePayment(uint _price, address _seller) internal {
+    //     require (msg.value >= _price, "Not enough funds");
 
-        // Platform Fees
-        bool success;
-        uint platformFee;
-        if (mpFeesPercentage > 0) {
-            platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
-            // process platform fee payment
-            (success, ) = (mpFeesCollector).call{value: platformFee}("");
-            require(success, "Transfer failed to mpFeesCollector.");
-            // payable(mpFeesCollector).transfer(platformFee);
-        }
+    //     // Platform Fees
+    //     bool success;
+    //     uint platformFee;
+    //     if (mpFeesPercentage > 0) {
+    //         platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
+    //         // process platform fee payment
+    //         (success, ) = (mpFeesCollector).call{value: platformFee}("");
+    //         require(success, "Transfer failed to mpFeesCollector.");
+    //         // payable(mpFeesCollector).transfer(platformFee);
+    //     }
 
-        // transfer payment
-        uint sellerAmount = _price - platformFee;
-        (success, ) = (_seller).call{value: sellerAmount}("");
-        require(success, "Transfer failed to seller.");
-        // payable(_seller).transfer(sellerAmount);
+    //     // transfer payment
+    //     uint sellerAmount = _price - platformFee;
+    //     (success, ) = (_seller).call{value: sellerAmount}("");
+    //     require(success, "Transfer failed to seller.");
+    //     // payable(_seller).transfer(sellerAmount);
 
-        // Refund excess funds
-        uint remainingFunds = msg.value - _price;
-        if (remainingFunds > 0) {
-            (success, ) = (_msgSender()).call{value: remainingFunds}("");
-            require(success, "Transfer failed to buyer.");
-            // payable(_msgSender()).transfer(remainingFunds);
-        }
-    }
+    //     // Refund excess funds
+    //     uint remainingFunds = msg.value - _price;
+    //     if (remainingFunds > 0) {
+    //         (success, ) = (_msgSender()).call{value: remainingFunds}("");
+    //         require(success, "Transfer failed to buyer.");
+    //         // payable(_msgSender()).transfer(remainingFunds);
+    //     }
+    // }
 
     /**
      * @notice process other tokens payment
@@ -364,19 +364,19 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _price price to be paid
      * @param _seller seller address
      */
-    function processPayment(address _token, uint _price, address _seller) internal {
-        IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
+    // function processPayment(address _token, uint _price, address _seller) internal {
+    //     IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
 
-        // Fees
-        uint platformFee;
-        if (mpFeesPercentage > 0) {
-            platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
-            // process fee payment
-            IERC20(_token).safeTransfer(mpFeesCollector, platformFee);
-        }
+    //     // Fees
+    //     uint platformFee;
+    //     if (mpFeesPercentage > 0) {
+    //         platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
+    //         // process fee payment
+    //         IERC20(_token).safeTransfer(mpFeesCollector, platformFee);
+    //     }
 
-        // transfer payment
-        uint sellerAmount = _price - platformFee;
-        IERC20(_token).safeTransfer(_seller, sellerAmount);
-    }
+    //     // transfer payment
+    //     uint sellerAmount = _price - platformFee;
+    //     IERC20(_token).safeTransfer(_seller, sellerAmount);
+    // }
 }
