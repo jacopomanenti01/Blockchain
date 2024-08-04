@@ -92,6 +92,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _newMPFeesPercentage new marketplace fees percentage (scaled by 10^6)
      */
     function setMarketPlaceFee(uint _newMPFeesPercentage) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_newMPFeesPercentage <= PERCENT_DIVIDER, "Fee over 100%");
+
         mpFeesPercentage = _newMPFeesPercentage;
         emit NewMPFees(mpFeesPercentage);
     }
@@ -329,34 +331,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _price price to be paid
      * @param _seller seller address
      */
-    // function processNativePayment(uint _price, address _seller) internal {
-    //     require (msg.value >= _price, "Not enough funds");
-
-    //     // Platform Fees
-    //     bool success;
-    //     uint platformFee;
-    //     if (mpFeesPercentage > 0) {
-    //         platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
-    //         // process platform fee payment
-    //         (success, ) = (mpFeesCollector).call{value: platformFee}("");
-    //         require(success, "Transfer failed to mpFeesCollector.");
-    //         // payable(mpFeesCollector).transfer(platformFee);
-    //     }
-
-    //     // transfer payment
-    //     uint sellerAmount = _price - platformFee;
-    //     (success, ) = (_seller).call{value: sellerAmount}("");
-    //     require(success, "Transfer failed to seller.");
-    //     // payable(_seller).transfer(sellerAmount);
-
-    //     // Refund excess funds
-    //     uint remainingFunds = msg.value - _price;
-    //     if (remainingFunds > 0) {
-    //         (success, ) = (_msgSender()).call{value: remainingFunds}("");
-    //         require(success, "Transfer failed to buyer.");
-    //         // payable(_msgSender()).transfer(remainingFunds);
-    //     }
-    // }
 
     /**
      * @notice process other tokens payment
