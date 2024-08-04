@@ -27,6 +27,7 @@ contract MarketplaceTest is Test {
     function setUp() public {
         owner = msg.sender;
 
+        vm.startPrank(owner);
         // Deploy a payment token and distribute it
         paymentToken = new GenericERC20("Payment Token", "PayT", 1000000);
 
@@ -35,11 +36,14 @@ contract MarketplaceTest is Test {
         nft = NFT(factory.associatedNFT(recordCompany));
 
         marketplace = new Marketplace(address(factory), feeCollector, feePercentage);
+        vm.stopPrank();
     }
 
     function test_Deployment() public view {
         assertEq(feeCollector, marketplace.mpFeesCollector(), "Wrong fees collector address");
         assertEq(feePercentage, marketplace.mpFeesPercentage(), "Wrong fees percentage");
+
+        assertEq(marketplace.hasRole(marketplace.DEFAULT_ADMIN_ROLE(), owner), true, "Deployer is not admin");
     }
 
     function testFuzz_TreasuryUpdateAccess(address _attacker) public {
@@ -52,11 +56,15 @@ contract MarketplaceTest is Test {
     }
 
     function testFuzz_TreasuryUpdate(address _newTreasury) public {
+        vm.startPrank(owner);
+
         marketplace.setNewTreasury(_newTreasury);
         assertEq(marketplace.mpFeesCollector(), _newTreasury, "Incorrect treasury");
 
         // Restore treasury
         marketplace.setNewTreasury(feeCollector);
+
+        vm.stopPrank();
     }
 
     function testFuzz_FeeUpdateAccess(address _attacker) public {
@@ -71,18 +79,23 @@ contract MarketplaceTest is Test {
     function testFuzz_FeeUpdateOverLimit(uint _fee) public {
         vm.assume(_fee > marketplace.PERCENT_DIVIDER());
 
+        vm.startPrank(owner);
         vm.expectRevert();
         marketplace.setMarketPlaceFee(_fee);
+        vm.stopPrank();
     }
 
     function testFuzz_FeeUpdate(uint _fee) public {
         vm.assume(_fee <= marketplace.PERCENT_DIVIDER());
-
+        
+        vm.startPrank(owner);
         marketplace.setMarketPlaceFee(_fee);
         assertEq(marketplace.mpFeesPercentage(), _fee, "Incorrect fee percentage");
 
         // Restore treasury
         marketplace.setMarketPlaceFee(feePercentage);
+
+        vm.stopPrank();
     }
 
     function testFuzz_FactoryUpdateAccess(address _attacker) public {
@@ -97,11 +110,13 @@ contract MarketplaceTest is Test {
     function test_FactoryUpdate() public {
         NFTFactory factory2 = new NFTFactory();
 
+        vm.startPrank(owner);
         marketplace.setNFTFactory(address(factory2));
         assertEq(address(marketplace.nftFactory()), address(factory2), "Incorrect new factory");
 
         // Restore factory
         marketplace.setNFTFactory(address(factory));
+        vm.stopPrank();
     }
 
 }

@@ -83,7 +83,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _newMPFeesCollector new treasury address
      */
     function setNewTreasury(address _newMPFeesCollector) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_newMPFeesCollector != address(0), "Address not allowed");
         mpFeesCollector = _newMPFeesCollector;
     }
 
