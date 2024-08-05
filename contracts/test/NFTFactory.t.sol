@@ -15,13 +15,15 @@ contract NFTFactoryTest is Test {
     address public recordCompanyAdmin = address(0x1);
     address public treasury = address(0x2);
 
+    uint public fee = 50000; // 5%
+
     function setUp() public {
         factory = new NFTFactory();
     }
 
     function test_Deployment() public {
         // Deploy new contract
-        factory.deployNFT("Name", recordCompanyAdmin, treasury);
+        factory.deployNFT("Name", recordCompanyAdmin, treasury, fee);
 
         // Save nft object for later tests
         nft = NFT(factory.associatedNFT(recordCompanyAdmin));
@@ -30,6 +32,7 @@ contract NFTFactoryTest is Test {
         assertEq(nft.name(), "Name", "Incorrect name");
         assertEq(nft.hasRole(nft.RECORD_COMPANY_ROLE(), recordCompanyAdmin), true, "Record company admin misses role");
         assertEq(nft.hasRole(nft.DEFAULT_ADMIN_ROLE(), msg.sender), true, "Owner admin misses role");
+        assertEq(nft.recordCompanyFee(), fee, "Incorrect record company fee");
     }
 
 }

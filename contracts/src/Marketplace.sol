@@ -17,7 +17,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     uint public constant PERCENT_DIVIDER = 1000000;  // percentage divider, 6 decimals
 
     struct Order { // single order listed on the marketplace
-        uint orderId;     // order ID, starting from 1
         address paymentToken; // if token is address(0), it means native coin
         uint price; // sell price for single token
         uint amount; // 1 or more for ERC1155
@@ -97,6 +96,16 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit NewMPFees(mpFeesPercentage);
     }
 
+    /**
+     * @notice create a sell order
+     * @param _collection address of the NFT smart contract. It must be deployed be the factory
+     * @param _tokenId id of the NFT to sell
+     * @param _amount amount of copies to sell
+     * @param _price total price for the order
+     * @param _paymentToken address of the payment token you want to receive. Use address(0) for the native coin
+     * @dev before calling this function, the seller must call the nft.setApprovalForAll function by allowing
+            the marketplace to operate
+     */
     function createOrder(
         address _collection,
         uint _tokenId,
@@ -109,10 +118,17 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
-        orderCounter++;
-        orders[orderCounter] = Order(orderCounter, _paymentToken, _price, _amount, _tokenId, msg.sender, _collection);
+        Order storage  order = orders[orderCounter];
+        order.paymentToken = _paymentToken;
+        order.price = _price;
+        order.amount = _amount;
+        order.tokenId = _tokenId;
+        order.owner = msg.sender;
+        order.collection = _collection;
 
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
+
+        orderCounter++;
     }
 
     function createAuction(
@@ -201,7 +217,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
-        require(order.orderId != 0, "Order does not exist");
+
+        // TODO: remove usedOrderIds and add "filled" parameter in order structure
         require(!usedOrderIds[_orderId], "Order ID already completely filled");
         require(_buyAmount <= order.amount, "Not enough tokens to buy");
 
@@ -217,6 +234,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
             payable(nft.treasury()).transfer(recordCompanyFee);
             payable(order.owner).transfer(sellerAmount);
         } else {
+            IERC20(order.paymentToken).safeTransferFrom(msg.sender, address(this), totalPrice);
+
             IERC20(order.paymentToken).safeTransfer(mpFeesCollector, platformFee);
             IERC20(order.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
             IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
@@ -225,6 +244,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
         order.amount -= _buyAmount;
         if (order.amount == 0) {
+            // TODO: Set new "filled" parameter to true
             delete orders[_orderId];
         }
 
@@ -325,18 +345,18 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     
     // INTERNAL METHODS
-    /**
-     * @notice process native token payment
-     * @param _price price to be paid
-     * @param _seller seller address
-     */
+    // /**
+    //  * @notice process native token payment
+    //  * @param _price price to be paid
+    //  * @param _seller seller address
+    //  */
 
-    /**
-     * @notice process other tokens payment
-     * @param _token payment token address
-     * @param _price price to be paid
-     * @param _seller seller address
-     */
+    // /**
+    //  * @notice process other tokens payment
+    //  * @param _token payment token address
+    //  * @param _price price to be paid
+    //  * @param _seller seller address
+    //  */
     // function processPayment(address _token, uint _price, address _seller) internal {
     //     IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
 
@@ -352,4 +372,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     //     uint sellerAmount = _price - platformFee;
     //     IERC20(_token).safeTransfer(_seller, sellerAmount);
     // }
+
+    function onERC1155Received(address, address, uint, uint, bytes calldata) external returns (bytes4) {
+        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+    }
 }

@@ -12,13 +12,14 @@ contract NFTTest is Test {
 
     address public recordCompanyAdmin = address(0x1);
     address public treasury = address(0x2);
+    uint public fee = 50000; // 5%
     address public owner;
 
     function setUp() public {
         owner = msg.sender;
 
         factory = new NFTFactory();
-        factory.deployNFT("Test", recordCompanyAdmin, treasury);
+        factory.deployNFT("Test", recordCompanyAdmin, treasury, fee);
 
         nft = NFT(factory.associatedNFT(recordCompanyAdmin));
     }
