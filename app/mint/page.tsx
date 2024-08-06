@@ -23,11 +23,6 @@ import {abi as FactoryAbi} from "../../contracts/out/NFTFactory.sol/NFTFactory.j
 import UploadFile from "@/components/createNFT/DropZone"
 import FileUploader from "@/components/createNFT/fun1"
 
-
-
-
-
-
 function page() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false)
