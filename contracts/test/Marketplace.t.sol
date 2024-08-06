@@ -156,6 +156,7 @@ contract MarketplaceTest is Test {
         assertEq(tokenId, 0, "Incorrect token id");
         assertEq(effSeller, seller, "Incorrect order owner");
         assertEq(collection, address(nft), "Incorrect nft address");
+        assertEq(marketplace.orderCounter(), 1, "Incorrect order counter");
 
         // Buy
         vm.startPrank(buyer);
@@ -220,6 +221,7 @@ contract MarketplaceTest is Test {
         assertEq(tokenId, 0, "Incorrect token id");
         assertEq(effSeller, seller, "Incorrect order owner");
         assertEq(collection, address(nft), "Incorrect nft address");
+        assertEq(marketplace.orderCounter(), 1, "Incorrect order counter");
 
         // Buy
         vm.startPrank(buyer);
@@ -255,5 +257,48 @@ contract MarketplaceTest is Test {
         (, , amount, left, , ,) = marketplace.orders(0);
         assertEq(amount, sellAmount, "Incorrect amount in order after buy");
         assertEq(left, 0, "Incorrect left amount in order after buy");
+    }
+
+        function test_SuccessfulAuctionPaymentToken() public {
+        uint sellAmount = 100;
+        uint basePrice = 1e18;
+        uint minIncrement = 0.1 * 1e18;
+
+        // Sell
+        vm.startPrank(seller);
+        uint sellerBalanceBefore = nft.balanceOf(seller, 0);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, sellAmount, basePrice, minIncrement, block.timestamp + 3600, address(paymentToken));
+        uint sellerBalanceAfter = nft.balanceOf(seller, 0);
+        uint marketplaceBalanceAfterCreateOrder = nft.balanceOf(address(marketplace), 0);
+        vm.stopPrank();
+
+        // Checks
+        assertEq(sellerBalanceBefore - sellerBalanceAfter, sellAmount, "Incorrect balances for seller");
+        assertEq(marketplaceBalanceAfterCreateOrder, sellAmount, "Incorrect balances for marketplace after create order");
+        
+        (uint auctionId, address payT, uint effBasePrice, uint effMinIncrement, uint deadline, 
+            uint highestBid, uint amount, address effSeller, address collection, address highestBidder) = marketplace.auctions(0);
+        
+        assertEq(auctionId, 0, "Incorrect auction id");
+        assertEq(payT, address(paymentToken), "Incorrect payment token");
+        assertEq(effBasePrice, basePrice, "Incorrect base price");
+        assertEq(effMinIncrement, minIncrement, "Incorrect minimum increment");
+        assertEq(deadline, block.timestamp + 3600, "Incorrect deadline");
+        assertEq(highestBid, 0, "Incorrect highest bid");
+        assertEq(amount, sellAmount, "Incorrect sell amount");
+        assertEq(effSeller, seller, "Incorrect seller");
+        assertEq(collection, address(nft), "Incorrect collection");
+        assertEq(highestBidder, address(0), "Incorrect highest bidder");
+        assertEq(marketplace.auctionCounter(), 1, "Incorrect auction counter");
+
+        // TODO: First bid
+
+        // TODO: Second bid
+
+        // TODO: Try to end auction before deadline
+
+        // TODO: Complete auction
+        
     }
 }

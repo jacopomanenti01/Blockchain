@@ -33,6 +33,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         uint minIncrement;
         uint deadline;
         uint highestBid;
+        uint amount;
         address owner; // address that creates the listing
         address collection;  // NFT address
         address highestBidder;
@@ -43,8 +44,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     // MarketPlace Fee 
     uint public mpFeesPercentage;
 
-    uint private orderCounter;
-    uint private auctionCounter;
+    uint public orderCounter;
+    uint public auctionCounter;
 
     INFTFactory public nftFactory;
 
@@ -147,11 +148,23 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
-        auctionCounter++;
-        auctions[auctionCounter] = Auction(auctionCounter, _paymentToken, _basePrice, _minIncrement, _deadline, 0, msg.sender, _collection, address(0));
-        isAuction[auctionCounter] = true;
+        Auction storage auction = auctions[auctionCounter];
+        auction.auctionId = auctionCounter;
+        auction.paymentToken = _paymentToken;
+        auction.basePrice = _basePrice;
+        auction.minIncrement = _minIncrement;
+        auction.deadline = _deadline;
+        auction.highestBid = 0;
+        auction.amount = _amount;
+        auction.owner = msg.sender;
+        auction.collection = _collection;
+        auction.highestBidder = address(0);
 
+        isAuction[auctionCounter] = true;
+    
         emit NewAuction(auctionCounter, _basePrice, _minIncrement, _deadline);
+
+        auctionCounter++;
     }
 
     function bid(uint _auctionId, uint _amount) external payable nonReentrant {
