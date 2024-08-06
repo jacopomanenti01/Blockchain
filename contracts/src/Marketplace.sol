@@ -373,7 +373,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     //     IERC20(_token).safeTransfer(_seller, sellerAmount);
     // }
 
-    function onERC1155Received(address, address, uint, uint, bytes calldata) external returns (bytes4) {
+    function onERC1155Received(address, address, uint, uint, bytes calldata) external pure returns (bytes4) {
         return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
     }
 }
