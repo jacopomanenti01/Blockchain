@@ -198,9 +198,9 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         uint sellerAmount = auction.highestBid - platformFee - recordCompanyFee;
 
         if (auction.paymentToken == address(0)) {
-            payable(mpFeesCollector).transfer(platformFee);
-            payable(nft.treasury()).transfer(recordCompanyFee);
-            payable(auction.owner).transfer(sellerAmount);
+            processPaymentETH(mpFeesCollector, platformFee, "Unable to pay fees collector");
+            processPaymentETH(nft.treasury(), recordCompanyFee, "Unable to pay record company fees");
+            processPaymentETH(auction.owner, sellerAmount, "Unable to pay seller");
         } else {
             IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
             IERC20(auction.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
@@ -228,9 +228,10 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         if (order.paymentToken == address(0)) {
             require(msg.value >= totalPrice, "Insufficient funds");
-            payable(mpFeesCollector).transfer(platformFee);
-            payable(nft.treasury()).transfer(recordCompanyFee);
-            payable(order.owner).transfer(sellerAmount);
+
+            processPaymentETH(mpFeesCollector, platformFee, "Unable to pay fees collector");
+            processPaymentETH(nft.treasury(), recordCompanyFee, "Unable to pay record company fees");
+            processPaymentETH(order.owner, sellerAmount, "Unable to pay seller");
         } else {
             IERC20(order.paymentToken).safeTransferFrom(msg.sender, address(this), totalPrice);
 
@@ -369,5 +370,11 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     function onERC1155Received(address, address, uint, uint, bytes calldata) external pure returns (bytes4) {
         return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+    }
+
+    // Internal function to process ETH payments
+    function processPaymentETH(address _to, uint _amount, string memory _error) internal {
+        (bool success, ) = address(_to).call{value: _amount}("");
+        require(success, _error);
     }
 }

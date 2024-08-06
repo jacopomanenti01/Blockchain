@@ -34,6 +34,8 @@ contract MarketplaceTest is Test {
         paymentToken = new GenericERC20("Payment Token", "PayT", 1000000);
         paymentToken.transfer(buyer, 100000 * 1e18);
 
+        vm.deal(buyer, 1000 * 1e18);
+
         factory = new NFTFactory();
         factory.deployNFT("Token1", recordCompany, treasury, rcFeePercentage);
         nft = NFT(factory.associatedNFT(recordCompany));
@@ -192,4 +194,66 @@ contract MarketplaceTest is Test {
         assertEq(left, 0, "Incorrect left amount in order after buy");
     }
 
+    function test_SuccessfulBuyOrderWithNativeCoin() public {
+        uint sellAmount = 500;
+        uint sellPrice = 0.5 * 1e18;
+        uint totalSellPrice = sellPrice * sellAmount;
+
+        // Sell
+        vm.startPrank(seller);
+        uint sellerBalanceBefore = nft.balanceOf(seller, 0);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createOrder(address(nft), 0, sellAmount, sellPrice, address(0));
+        uint sellerBalanceAfter = nft.balanceOf(seller, 0);
+        uint marketplaceBalanceAfterCreateOrder = nft.balanceOf(address(marketplace), 0);
+        vm.stopPrank();
+
+        // Checks
+        assertEq(sellerBalanceBefore - sellerBalanceAfter, sellAmount, "Incorrect balances for seller");
+        assertEq(marketplaceBalanceAfterCreateOrder, sellAmount, "Incorrect balances for marketplace after create order");
+        
+        (address payT, uint price, uint amount, uint left, uint tokenId, address effSeller, address collection) = marketplace.orders(0);
+        assertEq(payT, address(0), "Incorrect payment token");
+        assertEq(price, sellPrice, "Incorrect sell price");
+        assertEq(amount, sellAmount, "Incorrect sell amount");
+        assertEq(left, sellAmount, "Incorrect left tokens amount");
+        assertEq(tokenId, 0, "Incorrect token id");
+        assertEq(effSeller, seller, "Incorrect order owner");
+        assertEq(collection, address(nft), "Incorrect nft address");
+
+        // Buy
+        vm.startPrank(buyer);
+        uint sellerPaymentBalanceBefore = seller.balance;
+        uint buyerPaymentBalanceBefore = buyer.balance;
+        uint treasuryPaymentBalanceBefore = treasury.balance;
+        uint feeCollectorPaymentBalanceBefore = feeCollector.balance;
+        uint buyerNFTBalanceBefore = nft.balanceOf(buyer, 0);
+
+        marketplace.buy{value: totalSellPrice}(0, sellAmount);
+
+        uint sellerPaymentBalanceAfter = seller.balance;
+        uint buyerPaymentBalanceAfter = buyer.balance;
+        uint treasuryPaymentBalanceAfter = treasury.balance;
+        uint feeCollectorPaymentBalanceAfter = feeCollector.balance;
+        uint buyerNFTBalanceAfter = nft.balanceOf(buyer, 0);
+        uint marketplaceNFTBalanceAfterBuy = nft.balanceOf(address(marketplace), 0);
+        vm.stopPrank();
+
+        // Checks
+        uint expectedTreasuryAmount = totalSellPrice * rcFeePercentage / marketplace.PERCENT_DIVIDER();
+        uint expectedFeeCollectorAmount = totalSellPrice * marketplaceFeePercentage / marketplace.PERCENT_DIVIDER();
+
+        assertLe(buyerPaymentBalanceBefore - buyerPaymentBalanceAfter, totalSellPrice, "Incorrect amount deducted from buyer"); // Less or equal because we have to consider transaction fees
+        assertEq(treasuryPaymentBalanceAfter - treasuryPaymentBalanceBefore, expectedTreasuryAmount, "Incorrect record company fees deducted");
+        assertEq(feeCollectorPaymentBalanceAfter - feeCollectorPaymentBalanceBefore, expectedFeeCollectorAmount, "Incorrect marketplace fees deducted");
+        assertEq(sellerPaymentBalanceAfter - sellerPaymentBalanceBefore, totalSellPrice - expectedFeeCollectorAmount - expectedTreasuryAmount, "Incorrect payment to seller");
+    
+        assertEq(marketplaceBalanceAfterCreateOrder - marketplaceNFTBalanceAfterBuy, sellAmount, "Incorrect NFT balance in marketplace");
+        assertEq(buyerNFTBalanceAfter - buyerNFTBalanceBefore, sellAmount, "Incorrect NFT balance in buyer");
+
+        // Check order status
+        (, , amount, left, , ,) = marketplace.orders(0);
+        assertEq(amount, sellAmount, "Incorrect amount in order after buy");
+        assertEq(left, 0, "Incorrect left amount in order after buy");
+    }
 }
