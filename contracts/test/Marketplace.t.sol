@@ -146,10 +146,11 @@ contract MarketplaceTest is Test {
         assertEq(sellerBalanceBefore - sellerBalanceAfter, sellAmount, "Incorrect balances for seller");
         assertEq(marketplaceBalanceAfterCreateOrder, sellAmount, "Incorrect balances for marketplace after create order");
         
-        (address payT, uint price, uint amount, uint tokenId, address effSeller, address collection) = marketplace.orders(0);
+        (address payT, uint price, uint amount, uint left, uint tokenId, address effSeller, address collection) = marketplace.orders(0);
         assertEq(payT, address(paymentToken), "Incorrect payment token");
         assertEq(price, sellPrice, "Incorrect sell price");
         assertEq(amount, sellAmount, "Incorrect sell amount");
+        assertEq(left, sellAmount, "Incorrect left tokens amount");
         assertEq(tokenId, 0, "Incorrect token id");
         assertEq(effSeller, seller, "Incorrect order owner");
         assertEq(collection, address(nft), "Incorrect nft address");
@@ -184,6 +185,11 @@ contract MarketplaceTest is Test {
     
         assertEq(marketplaceBalanceAfterCreateOrder - marketplaceNFTBalanceAfterBuy, sellAmount, "Incorrect NFT balance in marketplace");
         assertEq(buyerNFTBalanceAfter - buyerNFTBalanceBefore, sellAmount, "Incorrect NFT balance in buyer");
+
+        // Check order status
+        (, , amount, left, , ,) = marketplace.orders(0);
+        assertEq(amount, sellAmount, "Incorrect amount in order after buy");
+        assertEq(left, 0, "Incorrect left amount in order after buy");
     }
 
 }

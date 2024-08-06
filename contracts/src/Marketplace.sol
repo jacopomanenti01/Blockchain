@@ -19,7 +19,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     struct Order { // single order listed on the marketplace
         address paymentToken; // if token is address(0), it means native coin
         uint price; // sell price for single token
-        uint amount; // 1 or more for ERC1155
+        uint amount;
+        uint left; // amount of NFTs in the order not yet sold
         uint tokenId;
         address owner; // address that creates the listing
         address collection;  // NFT address
@@ -49,7 +50,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     mapping(uint => Order) public orders;
     mapping(uint => Auction) public auctions;
-    mapping(uint => bool) public usedOrderIds;
     mapping(uint => bool) public isAuction;
 
 
@@ -125,6 +125,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         order.tokenId = _tokenId;
         order.owner = msg.sender;
         order.collection = _collection;
+        order.left = _amount;
 
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
 
@@ -217,10 +218,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
-
-        // TODO: remove usedOrderIds and add "filled" parameter in order structure
-        require(!usedOrderIds[_orderId], "Order ID already completely filled");
-        require(_buyAmount <= order.amount, "Not enough tokens to buy");
+        require(_buyAmount <= order.left, "Not enough tokens to buy");
 
         INFT nft = INFT(order.collection);
         uint totalPrice = order.price * _buyAmount;
@@ -242,11 +240,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         }
 
         IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
-        order.amount -= _buyAmount;
-        if (order.amount == 0) {
-            // TODO: Set new "filled" parameter to true
-            delete orders[_orderId];
-        }
+        order.left -= _buyAmount;
 
         emit OrderFilled(_orderId, msg.sender, _buyAmount);
     }
