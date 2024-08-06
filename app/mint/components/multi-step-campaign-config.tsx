@@ -70,6 +70,7 @@ export const initialFormData: CampaignFormType = {
 const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 	console.log("Your custom save function");
 	console.log(values);
+	let CID = ""
 
 	try {
 		const formData = new FormData();
@@ -82,13 +83,21 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 		});
 
 		const resData = await res.json();		
-		// setCid(resData.IpfsHash);
-		console.log(resData)
+		CID = resData.IpfsHash;
+		console.log(CID)
 	  } catch (e) {
 		console.log(e);
 		alert("Trouble uploading file");
-	  }
-  
+	  } try{ 
+	  const res = await fetch("/api/retrive?cid=${CID}", {
+        method: "GET"
+      });
+      const resData = await res.json();
+	  console.log(resData)
+    } catch (e) {
+      console.log(e);
+      alert("Trouble uploading file");
+    }
 };
 
 //  5 - Define the steps and sub-forms and each field for step

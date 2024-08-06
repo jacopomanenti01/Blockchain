@@ -39,7 +39,7 @@ const CampaignForm = () => {
 				try{
 					const tx = await contract.createSinger(formData.stageName,formData.description,formData.genre, "htttps://" )
 					await tx.wait()
-					console.log(tx)
+					console.log(tx.hash)
 				}catch(err){
 					console.log(err)
 				}
