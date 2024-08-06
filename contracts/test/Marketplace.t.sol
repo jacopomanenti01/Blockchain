@@ -37,6 +37,8 @@ contract MarketplaceTest is Test {
         paymentToken.transfer(bidder2, 100000 * 1e18);
 
         vm.deal(buyer, 1000 * 1e18);
+        vm.deal(bidder1, 1000 * 1e18);
+        vm.deal(bidder2, 1000 * 1e18);
 
         factory = new NFTFactory();
         factory.deployNFT("Token1", recordCompany, treasury, rcFeePercentage);
@@ -247,7 +249,7 @@ contract MarketplaceTest is Test {
         uint expectedTreasuryAmount = totalSellPrice * rcFeePercentage / marketplace.PERCENT_DIVIDER();
         uint expectedFeeCollectorAmount = totalSellPrice * marketplaceFeePercentage / marketplace.PERCENT_DIVIDER();
 
-        assertLe(buyerPaymentBalanceBefore - buyerPaymentBalanceAfter, totalSellPrice, "Incorrect amount deducted from buyer"); // Less or equal because we have to consider transaction fees
+        assertEq(buyerPaymentBalanceBefore - buyerPaymentBalanceAfter, totalSellPrice, "Incorrect amount deducted from buyer");
         assertEq(treasuryPaymentBalanceAfter - treasuryPaymentBalanceBefore, expectedTreasuryAmount, "Incorrect record company fees deducted");
         assertEq(feeCollectorPaymentBalanceAfter - feeCollectorPaymentBalanceBefore, expectedFeeCollectorAmount, "Incorrect marketplace fees deducted");
         assertEq(sellerPaymentBalanceAfter - sellerPaymentBalanceBefore, totalSellPrice - expectedFeeCollectorAmount - expectedTreasuryAmount, "Incorrect payment to seller");
@@ -346,7 +348,7 @@ contract MarketplaceTest is Test {
 
         vm.warp(deadline); // update timestamp according to deadline
 
-        // TODO: Complete auction
+        // Complete auction
         sellerBalanceBefore = paymentToken.balanceOf(seller);
         uint treasuryBalanceBefore = paymentToken.balanceOf(treasury);
         uint feeCollectorBefore = paymentToken.balanceOf(feeCollector);
@@ -356,6 +358,108 @@ contract MarketplaceTest is Test {
         uint treasuryBalanceAfter = paymentToken.balanceOf(treasury);
         uint feeCollectorAfter = paymentToken.balanceOf(feeCollector);
         marketplaceBalanceAfter = paymentToken.balanceOf(address(marketplace));
+
+        uint expectedTreasuryAmount = bidAmount2 * rcFeePercentage / marketplace.PERCENT_DIVIDER();
+        uint expectedFeeCollectorAmount = bidAmount2 * marketplaceFeePercentage / marketplace.PERCENT_DIVIDER();
+
+        assertEq(treasuryBalanceAfter - treasuryBalanceBefore, expectedTreasuryAmount, "Incorrect amount in treasury");
+        assertEq(feeCollectorAfter - feeCollectorBefore, expectedFeeCollectorAmount, "Incorrect amount in fee collector");
+        assertEq(marketplaceBalanceAfter, 0, "Incorrect amount in marketplace");
+    }
+
+    function test_SuccessfulAuctionNativeCoin() public {
+        uint sellAmount = 100;
+        uint basePrice = 1e18;
+        uint minIncrement = 0.1 * 1e18;
+        uint bidAmount1 = basePrice;
+        uint bidAmount2 = basePrice + minIncrement;
+
+        // Sell
+        vm.startPrank(seller);
+        uint sellerBalanceBefore = nft.balanceOf(seller, 0);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, sellAmount, basePrice, minIncrement, block.timestamp + 3600, address(0));
+        uint sellerBalanceAfter = nft.balanceOf(seller, 0);
+        uint marketplaceBalanceAfterCreateOrder = nft.balanceOf(address(marketplace), 0);
+        vm.stopPrank();
+
+        // Checks
+        assertEq(sellerBalanceBefore - sellerBalanceAfter, sellAmount, "Incorrect balances for seller");
+        assertEq(marketplaceBalanceAfterCreateOrder, sellAmount, "Incorrect balances for marketplace after create order");
+        
+        (uint auctionId, address payT, uint effBasePrice, uint effMinIncrement, uint deadline, 
+            uint highestBid, uint amount, address effSeller, address collection, address highestBidder) = marketplace.auctions(0);
+        
+        assertEq(auctionId, 0, "Incorrect auction id");
+        assertEq(payT, address(0), "Incorrect payment token");
+        assertEq(effBasePrice, basePrice, "Incorrect base price");
+        assertEq(effMinIncrement, minIncrement, "Incorrect minimum increment");
+        assertEq(deadline, block.timestamp + 3600, "Incorrect deadline");
+        assertEq(highestBid, 0, "Incorrect highest bid");
+        assertEq(amount, sellAmount, "Incorrect sell amount");
+        assertEq(effSeller, seller, "Incorrect seller");
+        assertEq(collection, address(nft), "Incorrect collection");
+        assertEq(highestBidder, address(0), "Incorrect highest bidder");
+        assertEq(marketplace.auctionCounter(), 1, "Incorrect auction counter");
+
+        // Failing bid due to base price
+        vm.startPrank(bidder1);
+        vm.expectRevert();
+        marketplace.bid(0, basePrice - 1);
+        vm.stopPrank();
+
+        // First bid
+        vm.startPrank(bidder1);
+        uint bidder1BalanceBefore = bidder1.balance;
+        uint marketplaceBalanceBefore = address(marketplace).balance;
+        marketplace.bid{value: bidAmount1}(0, 0);
+        uint bidder1BalanceAfter = bidder1.balance;
+        uint marketplaceBalanceAfter = address(marketplace).balance;
+        vm.stopPrank();
+
+        assertEq(bidder1BalanceBefore - bidder1BalanceAfter, bidAmount1, "Incorrect amount subtracted from bidder1");
+        assertEq(marketplaceBalanceAfter - marketplaceBalanceBefore, bidAmount1, "Incorrect amount transferred to marketplace");
+
+        // Failing bid due to insufficient increment
+        vm.startPrank(bidder2);
+        vm.expectRevert();
+        marketplace.bid{value: basePrice + 1}(0, 0);
+        vm.stopPrank();
+
+        // Second bid
+        vm.startPrank(bidder2);
+        bidder1BalanceBefore = bidder1.balance;
+        uint bidder2BalanceBefore = bidder2.balance;
+        marketplace.bid{value: bidAmount2}(0, 0);
+        bidder1BalanceAfter = bidder1.balance;
+        uint bidder2BalanceAfter = bidder2.balance;
+        marketplaceBalanceAfter = address(marketplace).balance;
+        vm.stopPrank();
+
+        assertEq(bidder1BalanceAfter - bidder1BalanceBefore, bidAmount1, "Incorrect amount sent to previous bidder");
+        assertEq(bidder2BalanceBefore - bidder2BalanceAfter, bidAmount2, "Incorrect amount subtracted from bidder2");
+        assertEq(marketplaceBalanceAfter, bidAmount2, "Incorrect amount in marketplace");
+
+        (, , , , , highestBid, , , , highestBidder) = marketplace.auctions(0);
+        assertEq(highestBid, bidAmount2, "Incorrect highest bid after second bid");
+        assertEq(highestBidder, bidder2, "Incorrect highest bidder after second bid");
+
+        // Try to end auction before deadline
+        vm.expectRevert();
+        marketplace.endAuction(0);
+
+        vm.warp(deadline); // update timestamp according to deadline
+
+        // Complete auction
+        sellerBalanceBefore = seller.balance;
+        uint treasuryBalanceBefore = treasury.balance;
+        uint feeCollectorBefore = feeCollector.balance;
+        marketplaceBalanceBefore = address(marketplace).balance;
+        marketplace.endAuction(0);
+        sellerBalanceAfter = seller.balance;
+        uint treasuryBalanceAfter = treasury.balance;
+        uint feeCollectorAfter = feeCollector.balance;
+        marketplaceBalanceAfter = address(marketplace).balance;
 
         uint expectedTreasuryAmount = bidAmount2 * rcFeePercentage / marketplace.PERCENT_DIVIDER();
         uint expectedFeeCollectorAmount = bidAmount2 * marketplaceFeePercentage / marketplace.PERCENT_DIVIDER();

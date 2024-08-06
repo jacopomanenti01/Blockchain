@@ -183,7 +183,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         // Refund previous bidder
         if (auction.highestBidder != address(0)) {
             if (auction.paymentToken == address(0)) {
-                payable(auction.highestBidder).transfer(auction.highestBid);
+                processPaymentETH(auction.highestBidder, auction.highestBid, "Unable to repay previous bidder");
             } else {
                 IERC20(auction.paymentToken).safeTransfer(auction.highestBidder, auction.highestBid);
             }
