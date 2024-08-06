@@ -7,7 +7,8 @@
 # Install npm dependencies
 echo "Installing npm dependencies..."
 #rm -rf node_modules package-lock.json  #uncomment if you want to clean your previous installation.
-npm install --force
+#npm install next@latest react@latest react-dom@latest
+npm install 
 npm install --save @pinata/sdk
 npm install --save react-dropzone
 
