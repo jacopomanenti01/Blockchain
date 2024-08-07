@@ -895,7 +895,8 @@ export const MintNFT = () => {
       "type": "function"
     }
   ]
-  let contract = new ethers.Contract("0xB1A9c44367D10FDa0341b6c9bc53eC1E5aB30E81", abi, signer)
+  // let contract = new ethers.Contract("0xB1A9c44367D10FDa0341b6c9bc53eC1E5aB30E81", abi, signer)
+  let contract = new ethers.Contract("0x604D03DA814dA89671b91e4a8E9B35064ED4c5B7", abi, signer)
   const tx = await contract.hasRole("0x768dd85fed03ac9c2c0f14fe090b045c29124f162b5fa7d6dd8ca0009807d4db","0x56C3E59117f37cf7203a0c6313c46003500b9317")
   console.log(tx)
   }

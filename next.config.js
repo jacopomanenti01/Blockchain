@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
-      const nextConfig = {experimental: {
-        serverActions: true,
-      },
+const nextConfig = {
+  // If serverActions needs to be enabled and it's configurable as a boolean in your version,
+  // verify with the specific Next.js documentation.
+  // However, typically, this should be an object or not used if it's experimental and not well documented.
+  experimental: {
+    // serverActions might need specific properties here, or be removed if causing issues
+    // serverActions: {},
+  },
   images: {
     remotePatterns: [
       {
@@ -9,16 +14,12 @@
         hostname: 'i.scdn.co',
       },
     ],
-    reactStrictMode: true,
-  webpack: config => {
+  },
+  reactStrictMode: true,
+  webpack: (config) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
     return config;
   },
-  },}
+};
 
-module.exports = nextConfig
-
-
-
-  
-
+module.exports = nextConfig;

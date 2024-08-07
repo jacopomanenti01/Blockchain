@@ -13,54 +13,20 @@ Foundry consists of:
 
 https://book.getfoundry.sh/
 
-## Usage
+## How to deploy
+In order to deploy the whole setup, you have to first create a .env file and fill it.
 
-### Build
-
-```shell
-$ forge build
+```bash
+cp .env.example .env
 ```
 
-### Test
-
-```shell
-$ forge test
+Then you can start the deployment by running the following command:
+```bash
+forge script DeployerScript --rpc-url <RPC_URL>  --broadcast --verify --etherscan-api-key <POLYGONSCAN_API_KEY>
 ```
 
-### Format
+## Deployments
 
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+### Amoy - 80002
+NFTFactory: 0x604D03DA814dA89671b91e4a8E9B35064ED4c5B7  
+Marketplace: 0xCaFBF8849aE2b3608D089d897ac1b085C67433fE  

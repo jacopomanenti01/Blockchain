@@ -38,6 +38,7 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         string description;
         string genre;
         string imageUrl;
+        bool exists;
     }
 
     struct Album {
@@ -52,19 +53,24 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
     mapping(uint256 => Album) public albums;
     mapping(string => bool) private singerExists;
 
-    uint256 private singerIdCounter;
-    uint256 private albumIdCounter;
+    uint256 public singerIdCounter;
+    uint256 public albumIdCounter;
     uint256 public recordCompanyFee;
+
+    string public name;
 
     address public treasury;
 
     INFTFactory public factory;
 
-    constructor(string memory _uri, address _recordCompanyAdmin, address _treasury) ERC1155(_uri) ERC1155Supply() { 
-        _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // Due to the factory
+    constructor(string memory _name, address _recordCompanyAdmin, address _treasury, uint _initialFee) ERC1155("") ERC1155Supply() { 
+        _grantRole(DEFAULT_ADMIN_ROLE, tx.origin); // tx.origin since facotry is deploying this
         _grantRole(RECORD_COMPANY_ROLE, _recordCompanyAdmin);
+        _setRoleAdmin(RECORD_COMPANY_ROLE, RECORD_COMPANY_ROLE); // Only record company can manage its accounts
 
         treasury = _treasury;
+        name = _name;
+        recordCompanyFee = _initialFee;
 
         factory = INFTFactory(msg.sender);
     }
@@ -76,9 +82,15 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         string memory _imageUrl
     ) external onlyRole(RECORD_COMPANY_ROLE) {
         require(!singerExists[_stageName], "Singer already exists");
+
+        Singer storage singer = singers[singerIdCounter];
+        singer.stageName = _stageName;
+        singer.description = _description;
+        singer.genre = _genre;
+        singer.imageUrl = _imageUrl;
+        singer.exists = true;
+
         singerIdCounter++;
-        singers[singerIdCounter] = Singer(_stageName, _description, _genre, _imageUrl);
-        singerExists[_stageName] = true;
     }
 
     function createAlbum(
@@ -86,12 +98,36 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         uint256 _singerId,
         string memory _metadataUrl
     ) external onlyRole(RECORD_COMPANY_ROLE) {
-        require(bytes(singers[_singerId].stageName).length > 0, "Singer does not exist");
-        albumIdCounter++;
-        albums[albumIdCounter] = Album(_shareCount, _singerId, _metadataUrl);
+        require(singers[_singerId].exists, "Singer does not exist");
+
+        
+        Album storage album = albums[albumIdCounter];
+        album.metadataUrl = _metadataUrl;
+        album.singerId = _singerId;
+        album.shareCount = _shareCount;
+
         _mint(msg.sender, albumIdCounter, _shareCount, "");
+
         // Add the marketplace address to the whitelist
         // Marketplace contract address should be passed and managed appropriately
+
+        albumIdCounter++;
+    }
+
+    /**
+     * @notice returns an arraay with the singers in the specified range
+     * @param _start starting index (inclusive)
+     * @param _end ending index (exclusive)
+     */
+    function getSingers(uint _start, uint _end) public view returns (Singer[] memory) {
+        require(_end <= singerIdCounter, "Invalid end");
+        require(_end >= _start, "Invalid parameters");
+
+        Singer[] memory array = new Singer[](_end - _start);
+        for (uint i = _start; i < _end; i++) {
+            array[i - _start] = singers[i];
+        }
+        return array;
     }
 
     function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {

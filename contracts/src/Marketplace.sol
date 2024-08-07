@@ -17,10 +17,10 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     uint public constant PERCENT_DIVIDER = 1000000;  // percentage divider, 6 decimals
 
     struct Order { // single order listed on the marketplace
-        uint orderId;     // order ID, starting from 1
         address paymentToken; // if token is address(0), it means native coin
         uint price; // sell price for single token
-        uint amount; // 1 or more for ERC1155
+        uint amount;
+        uint left; // amount of NFTs in the order not yet sold
         uint tokenId;
         address owner; // address that creates the listing
         address collection;  // NFT address
@@ -33,6 +33,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         uint minIncrement;
         uint deadline;
         uint highestBid;
+        uint amount;
         address owner; // address that creates the listing
         address collection;  // NFT address
         address highestBidder;
@@ -43,14 +44,13 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     // MarketPlace Fee 
     uint public mpFeesPercentage;
 
-    uint private orderCounter;
-    uint private auctionCounter;
+    uint public orderCounter;
+    uint public auctionCounter;
 
     INFTFactory public nftFactory;
 
     mapping(uint => Order) public orders;
     mapping(uint => Auction) public auctions;
-    mapping(uint => bool) public usedOrderIds;
     mapping(uint => bool) public isAuction;
 
 
@@ -83,7 +83,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _newMPFeesCollector new treasury address
      */
     function setNewTreasury(address _newMPFeesCollector) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_newMPFeesCollector != address(0), "Address not allowed");
         mpFeesCollector = _newMPFeesCollector;
     }
 
@@ -92,10 +91,22 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _newMPFeesPercentage new marketplace fees percentage (scaled by 10^6)
      */
     function setMarketPlaceFee(uint _newMPFeesPercentage) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_newMPFeesPercentage <= PERCENT_DIVIDER, "Fee over 100%");
+
         mpFeesPercentage = _newMPFeesPercentage;
         emit NewMPFees(mpFeesPercentage);
     }
 
+    /**
+     * @notice create a sell order
+     * @param _collection address of the NFT smart contract. It must be deployed be the factory
+     * @param _tokenId id of the NFT to sell
+     * @param _amount amount of copies to sell
+     * @param _price total price for the order
+     * @param _paymentToken address of the payment token you want to receive. Use address(0) for the native coin
+     * @dev before calling this function, the seller must call the nft.setApprovalForAll function by allowing
+            the marketplace to operate
+     */
     function createOrder(
         address _collection,
         uint _tokenId,
@@ -108,10 +119,18 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
-        orderCounter++;
-        orders[orderCounter] = Order(orderCounter, _paymentToken, _price, _amount, _tokenId, msg.sender, _collection);
+        Order storage  order = orders[orderCounter];
+        order.paymentToken = _paymentToken;
+        order.price = _price;
+        order.amount = _amount;
+        order.tokenId = _tokenId;
+        order.owner = msg.sender;
+        order.collection = _collection;
+        order.left = _amount;
 
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
+
+        orderCounter++;
     }
 
     function createAuction(
@@ -129,11 +148,23 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
-        auctionCounter++;
-        auctions[auctionCounter] = Auction(auctionCounter, _paymentToken, _basePrice, _minIncrement, _deadline, 0, msg.sender, _collection, address(0));
-        isAuction[auctionCounter] = true;
+        Auction storage auction = auctions[auctionCounter];
+        auction.auctionId = auctionCounter;
+        auction.paymentToken = _paymentToken;
+        auction.basePrice = _basePrice;
+        auction.minIncrement = _minIncrement;
+        auction.deadline = _deadline;
+        auction.highestBid = 0;
+        auction.amount = _amount;
+        auction.owner = msg.sender;
+        auction.collection = _collection;
+        auction.highestBidder = address(0);
 
+        isAuction[auctionCounter] = true;
+    
         emit NewAuction(auctionCounter, _basePrice, _minIncrement, _deadline);
+
+        auctionCounter++;
     }
 
     function bid(uint _auctionId, uint _amount) external payable nonReentrant {
@@ -152,7 +183,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         // Refund previous bidder
         if (auction.highestBidder != address(0)) {
             if (auction.paymentToken == address(0)) {
-                payable(auction.highestBidder).transfer(auction.highestBid);
+                processPaymentETH(auction.highestBidder, auction.highestBid, "Unable to repay previous bidder");
             } else {
                 IERC20(auction.paymentToken).safeTransfer(auction.highestBidder, auction.highestBid);
             }
@@ -174,35 +205,37 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp >= auction.deadline, "Auction is still ongoing");
 
-        INFT nft = INFT(auction.collection);
-        uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
-        uint recordCompanyFee = (auction.highestBid * nft.recordCompanyFee()) / PERCENT_DIVIDER;
-        uint sellerAmount = auction.highestBid - platformFee - recordCompanyFee;
+        // Auction successful case
+        if (auction.highestBid >= auction.basePrice) {
+            INFT nft = INFT(auction.collection);
+            uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
+            uint recordCompanyFee = (auction.highestBid * nft.recordCompanyFee()) / PERCENT_DIVIDER;
+            uint sellerAmount = auction.highestBid - platformFee - recordCompanyFee;
 
-        if (auction.paymentToken == address(0)) {
-            payable(mpFeesCollector).transfer(platformFee);
-            payable(nft.treasury()).transfer(recordCompanyFee);
-            payable(auction.owner).transfer(sellerAmount);
+            if (auction.paymentToken == address(0)) {
+                processPaymentETH(mpFeesCollector, platformFee, "Unable to pay fees collector");
+                processPaymentETH(nft.treasury(), recordCompanyFee, "Unable to pay record company fees");
+                processPaymentETH(auction.owner, sellerAmount, "Unable to pay seller");
+            } else {
+                IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
+                IERC20(auction.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
+                IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
+            }
+
+            IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, auction.amount, "");
         } else {
-            IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
-            IERC20(auction.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
-            IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
+            // Auction failed case -> return tokens to the owner
+            IERC1155(auction.collection).safeTransferFrom(address(this), auction.owner, auction.auctionId, auction.amount, "");
         }
-
-        IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, 1, "");
         
-        delete auctions[_auctionId];
-        delete isAuction[_auctionId];
-
         emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
     }
 
 
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
-        require(order.orderId != 0, "Order does not exist");
-        require(!usedOrderIds[_orderId], "Order ID already completely filled");
-        require(_buyAmount <= order.amount, "Not enough tokens to buy");
+        require(_buyAmount > 0, "Invali amount");
+        require(_buyAmount <= order.left, "Not enough tokens to buy");
 
         INFT nft = INFT(order.collection);
         uint totalPrice = order.price * _buyAmount;
@@ -212,20 +245,20 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
         if (order.paymentToken == address(0)) {
             require(msg.value >= totalPrice, "Insufficient funds");
-            payable(mpFeesCollector).transfer(platformFee);
-            payable(nft.treasury()).transfer(recordCompanyFee);
-            payable(order.owner).transfer(sellerAmount);
+
+            processPaymentETH(mpFeesCollector, platformFee, "Unable to pay fees collector");
+            processPaymentETH(nft.treasury(), recordCompanyFee, "Unable to pay record company fees");
+            processPaymentETH(order.owner, sellerAmount, "Unable to pay seller");
         } else {
+            IERC20(order.paymentToken).safeTransferFrom(msg.sender, address(this), totalPrice);
+
             IERC20(order.paymentToken).safeTransfer(mpFeesCollector, platformFee);
             IERC20(order.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
             IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
         }
 
         IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
-        order.amount -= _buyAmount;
-        if (order.amount == 0) {
-            delete orders[_orderId];
-        }
+        order.left -= _buyAmount;
 
         emit OrderFilled(_orderId, msg.sender, _buyAmount);
     }
@@ -237,12 +270,12 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     function cancel(uint _id) external {
         require(_id < orderCounter, "Invalid order id");
 
-        Order memory order = orders[_id];
+        Order storage order = orders[_id];
         require(order.owner == msg.sender, "Not token owner");
 
         IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
 
-        delete orders[_id];
+        order.left = 0;
 
         emit OrderCancelled(_id);
     }
@@ -324,59 +357,41 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     
     // INTERNAL METHODS
-    /**
-     * @notice process native token payment
-     * @param _price price to be paid
-     * @param _seller seller address
-     */
-    function processNativePayment(uint _price, address _seller) internal {
-        require (msg.value >= _price, "Not enough funds");
+    // /**
+    //  * @notice process native token payment
+    //  * @param _price price to be paid
+    //  * @param _seller seller address
+    //  */
 
-        // Platform Fees
-        bool success;
-        uint platformFee;
-        if (mpFeesPercentage > 0) {
-            platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
-            // process platform fee payment
-            (success, ) = (mpFeesCollector).call{value: platformFee}("");
-            require(success, "Transfer failed to mpFeesCollector.");
-            // payable(mpFeesCollector).transfer(platformFee);
-        }
+    // /**
+    //  * @notice process other tokens payment
+    //  * @param _token payment token address
+    //  * @param _price price to be paid
+    //  * @param _seller seller address
+    //  */
+    // function processPayment(address _token, uint _price, address _seller) internal {
+    //     IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
 
-        // transfer payment
-        uint sellerAmount = _price - platformFee;
-        (success, ) = (_seller).call{value: sellerAmount}("");
-        require(success, "Transfer failed to seller.");
-        // payable(_seller).transfer(sellerAmount);
+    //     // Fees
+    //     uint platformFee;
+    //     if (mpFeesPercentage > 0) {
+    //         platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
+    //         // process fee payment
+    //         IERC20(_token).safeTransfer(mpFeesCollector, platformFee);
+    //     }
 
-        // Refund excess funds
-        uint remainingFunds = msg.value - _price;
-        if (remainingFunds > 0) {
-            (success, ) = (_msgSender()).call{value: remainingFunds}("");
-            require(success, "Transfer failed to buyer.");
-            // payable(_msgSender()).transfer(remainingFunds);
-        }
+    //     // transfer payment
+    //     uint sellerAmount = _price - platformFee;
+    //     IERC20(_token).safeTransfer(_seller, sellerAmount);
+    // }
+
+    function onERC1155Received(address, address, uint, uint, bytes calldata) external pure returns (bytes4) {
+        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
     }
 
-    /**
-     * @notice process other tokens payment
-     * @param _token payment token address
-     * @param _price price to be paid
-     * @param _seller seller address
-     */
-    function processPayment(address _token, uint _price, address _seller) internal {
-        IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
-
-        // Fees
-        uint platformFee;
-        if (mpFeesPercentage > 0) {
-            platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
-            // process fee payment
-            IERC20(_token).safeTransfer(mpFeesCollector, platformFee);
-        }
-
-        // transfer payment
-        uint sellerAmount = _price - platformFee;
-        IERC20(_token).safeTransfer(_seller, sellerAmount);
+    // Internal function to process ETH payments
+    function processPaymentETH(address _to, uint _amount, string memory _error) internal {
+        (bool success, ) = address(_to).call{value: _amount}("");
+        require(success, _error);
     }
 }

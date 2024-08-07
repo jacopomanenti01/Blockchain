@@ -79,7 +79,8 @@ import {
                     try {
                         const provider = new ethers.providers.Web3Provider(window.ethereum);
                         const signer = provider.getSigner();
-                        const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
+                        // const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
+                        const contract = new ethers.Contract("0x604D03DA814dA89671b91e4a8E9B35064ED4c5B7", FactoryAbi, signer);
                         setProvider(provider);
                         setSigner(signer)
                         setContract(contract);

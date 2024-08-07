@@ -16,12 +16,13 @@ contract NFTFactory is AccessControl, INFTFactory {
 
     /**P
      * @dev Deploy a new NFT contract for a record company.
-     * @param _uri Base uri
+     * @param _name Name of the token
      * @param _recordCompanyAdmin Initial record company admin address
      * @param _treasury Record company treasury
+     * @param _initialFee Initial fee for the record company
      */
-    function deployNFT(string memory _uri, address _recordCompanyAdmin, address _treasury) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        NFT nft = new NFT(_uri, _recordCompanyAdmin, _treasury);
+    function deployNFT(string memory _name, address _recordCompanyAdmin, address _treasury, uint _initialFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        NFT nft = new NFT(_name, _recordCompanyAdmin, _treasury, _initialFee);
 
         isFactoryDeployed[address(nft)] = true;
         associatedNFT[_recordCompanyAdmin] = address(nft);
