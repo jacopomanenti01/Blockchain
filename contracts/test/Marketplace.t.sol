@@ -163,6 +163,27 @@ contract MarketplaceTest is Test {
         vm.stopPrank();
     }
 
+    function test_CancelInvalidOrder() public {
+        vm.expectRevert();
+        marketplace.cancel(10);
+    }
+
+    function test_CancelAccess() public {
+        uint sellAmount = 500;
+        uint sellPrice = 0.5 * 1e18;
+        uint totalSellPrice = sellPrice * sellAmount;
+
+        vm.startPrank(seller);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createOrder(address(nft), 0, sellAmount, sellPrice, address(paymentToken));
+        vm.stopPrank();
+
+        vm.startPrank(buyer);
+        vm.expectRevert();
+        marketplace.cancel(0);
+        vm.stopPrank();
+    }
+
     function test_SuccessfulBuyOrderWithPaymentToken() public {
         uint sellAmount = 500;
         uint sellPrice = 0.5 * 1e18;
