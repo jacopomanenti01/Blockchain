@@ -4,8 +4,10 @@ import { z } from "zod";
 import Step1 from "./step-1";
 import Step2 from "./step-2";
 import Step3 from "./step-3";
-
+import { ethers, providers, Signer } from 'ethers';
 import buildMultiStepForm from "@/lib/multi-step-form/index";
+import {abi as NFTAbi} from "../../../contracts/out/NFT.sol/NFT.json"
+
 
 //  1 - Define the full fields for the entire form
 export const CampaignFormSchema = z.object({
@@ -88,16 +90,16 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 	  } catch (e) {
 		console.log(e);
 		alert("Trouble uploading file");
-	  } try{ 
-	  const res = await fetch("/api/retrive?cid=${CID}", {
-        method: "GET"
-      });
-      const resData = await res.json();
-	  console.log(resData)
+	  } 
+	  try{ 
+		const web3prov = new providers.Web3Provider(window.ethereum)
+		const web3signer = web3prov.getSigner()
+		const web3contract = new ethers.Contract("0x46B48A76747437742a41b31b661cf325B55Bd182", NFTAbi, web3signer)
+		console.log(web3contract)
     } catch (e) {
       console.log(e);
       alert("Trouble uploading file");
-    }
+    } 
 };
 
 //  5 - Define the steps and sub-forms and each field for step
