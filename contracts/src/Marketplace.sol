@@ -205,26 +205,29 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp >= auction.deadline, "Auction is still ongoing");
 
-        INFT nft = INFT(auction.collection);
-        uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
-        uint recordCompanyFee = (auction.highestBid * nft.recordCompanyFee()) / PERCENT_DIVIDER;
-        uint sellerAmount = auction.highestBid - platformFee - recordCompanyFee;
+        // Auction successful case
+        if (auction.highestBid >= auction.basePrice) {
+            INFT nft = INFT(auction.collection);
+            uint platformFee = (auction.highestBid * mpFeesPercentage) / PERCENT_DIVIDER;
+            uint recordCompanyFee = (auction.highestBid * nft.recordCompanyFee()) / PERCENT_DIVIDER;
+            uint sellerAmount = auction.highestBid - platformFee - recordCompanyFee;
 
-        if (auction.paymentToken == address(0)) {
-            processPaymentETH(mpFeesCollector, platformFee, "Unable to pay fees collector");
-            processPaymentETH(nft.treasury(), recordCompanyFee, "Unable to pay record company fees");
-            processPaymentETH(auction.owner, sellerAmount, "Unable to pay seller");
+            if (auction.paymentToken == address(0)) {
+                processPaymentETH(mpFeesCollector, platformFee, "Unable to pay fees collector");
+                processPaymentETH(nft.treasury(), recordCompanyFee, "Unable to pay record company fees");
+                processPaymentETH(auction.owner, sellerAmount, "Unable to pay seller");
+            } else {
+                IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
+                IERC20(auction.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
+                IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
+            }
+
+            IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, auction.amount, "");
         } else {
-            IERC20(auction.paymentToken).safeTransfer(mpFeesCollector, platformFee);
-            IERC20(auction.paymentToken).safeTransfer(nft.treasury(), recordCompanyFee);
-            IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
+            // Auction failed case -> return tokens to the owner
+            IERC1155(auction.collection).safeTransferFrom(address(this), auction.owner, auction.auctionId, auction.amount, "");
         }
-
-        IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, 1, "");
         
-        delete auctions[_auctionId];
-        delete isAuction[_auctionId];
-
         emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
     }
 

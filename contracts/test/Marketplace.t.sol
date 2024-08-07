@@ -171,7 +171,6 @@ contract MarketplaceTest is Test {
     function test_CancelAccess() public {
         uint sellAmount = 500;
         uint sellPrice = 0.5 * 1e18;
-        uint totalSellPrice = sellPrice * sellAmount;
 
         vm.startPrank(seller);
         nft.setApprovalForAll(address(marketplace), true); 
@@ -403,11 +402,13 @@ contract MarketplaceTest is Test {
         uint treasuryBalanceBefore = paymentToken.balanceOf(treasury);
         uint feeCollectorBefore = paymentToken.balanceOf(feeCollector);
         marketplaceBalanceBefore = paymentToken.balanceOf(address(marketplace));
+        uint buyerBalanceBefore = nft.balanceOf(bidder2, 0);
         marketplace.endAuction(0);
         sellerBalanceAfter = paymentToken.balanceOf(seller);
         uint treasuryBalanceAfter = paymentToken.balanceOf(treasury);
         uint feeCollectorAfter = paymentToken.balanceOf(feeCollector);
         marketplaceBalanceAfter = paymentToken.balanceOf(address(marketplace));
+        uint buyerBalanceAfter = nft.balanceOf(bidder2, 0);
 
         uint expectedTreasuryAmount = bidAmount2 * rcFeePercentage / marketplace.PERCENT_DIVIDER();
         uint expectedFeeCollectorAmount = bidAmount2 * marketplaceFeePercentage / marketplace.PERCENT_DIVIDER();
@@ -415,6 +416,7 @@ contract MarketplaceTest is Test {
         assertEq(treasuryBalanceAfter - treasuryBalanceBefore, expectedTreasuryAmount, "Incorrect amount in treasury");
         assertEq(feeCollectorAfter - feeCollectorBefore, expectedFeeCollectorAmount, "Incorrect amount in fee collector");
         assertEq(marketplaceBalanceAfter, 0, "Incorrect amount in marketplace");
+        assertEq(buyerBalanceAfter - buyerBalanceBefore, sellAmount, "Incorrect amount of NFTs transferred to buyer");
     }
 
     function test_SuccessfulAuctionNativeCoin() public {
@@ -505,11 +507,13 @@ contract MarketplaceTest is Test {
         uint treasuryBalanceBefore = treasury.balance;
         uint feeCollectorBefore = feeCollector.balance;
         marketplaceBalanceBefore = address(marketplace).balance;
+        uint buyerBalanceBefore = nft.balanceOf(bidder2, 0);
         marketplace.endAuction(0);
         sellerBalanceAfter = seller.balance;
         uint treasuryBalanceAfter = treasury.balance;
         uint feeCollectorAfter = feeCollector.balance;
         marketplaceBalanceAfter = address(marketplace).balance;
+        uint buyerBalanceAfter = nft.balanceOf(bidder2, 0);
 
         uint expectedTreasuryAmount = bidAmount2 * rcFeePercentage / marketplace.PERCENT_DIVIDER();
         uint expectedFeeCollectorAmount = bidAmount2 * marketplaceFeePercentage / marketplace.PERCENT_DIVIDER();
@@ -517,5 +521,30 @@ contract MarketplaceTest is Test {
         assertEq(treasuryBalanceAfter - treasuryBalanceBefore, expectedTreasuryAmount, "Incorrect amount in treasury");
         assertEq(feeCollectorAfter - feeCollectorBefore, expectedFeeCollectorAmount, "Incorrect amount in fee collector");
         assertEq(marketplaceBalanceAfter, 0, "Incorrect amount in marketplace");
+        assertEq(buyerBalanceAfter - buyerBalanceBefore, sellAmount, "Incorrect amount of NFTs transferred to buyer");
+    }
+
+    function test_FailingAuction() public {
+        uint sellAmount = 100;
+        uint basePrice = 1e18;
+        uint minIncrement = 0.1 * 1e18;
+
+        // Sell
+        vm.startPrank(seller);
+        uint sellerBalanceBefore = nft.balanceOf(seller, 0);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, sellAmount, basePrice, minIncrement, block.timestamp + 3600, address(0));
+        vm.stopPrank();
+
+        // Time passes
+        vm.warp(block.timestamp + 3600);
+
+        // Owner claims back the tokens
+        vm.startPrank(seller);
+        marketplace.endAuction(0);
+        uint sellerBalanceAfter = nft.balanceOf(seller, 0);
+        vm.stopPrank();
+
+        assertEq(sellerBalanceAfter, sellerBalanceBefore, "Incorrect seller balance");
     }
 }
