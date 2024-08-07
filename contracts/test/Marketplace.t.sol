@@ -134,6 +134,35 @@ contract MarketplaceTest is Test {
         vm.stopPrank();
     }
 
+    function test_CancelBuyOrder() public {
+        uint sellAmount = 500;
+        uint sellPrice = 0.5 * 1e18;
+        uint totalSellPrice = sellPrice * sellAmount;
+
+        uint sellerBalanceNFTBefore = nft.balanceOf(seller, 0);
+        uint marketplaceBalanceNFTBefore = nft.balanceOf(address(marketplace), 0);
+
+        // Sell then cancel
+        vm.startPrank(seller);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createOrder(address(nft), 0, sellAmount, sellPrice, address(paymentToken));
+        marketplace.cancel(0);
+        vm.stopPrank();
+        
+        uint sellerBalanceNFTAfter = nft.balanceOf(seller, 0);
+        uint marketplaceBalanceNFTAfter = nft.balanceOf(address(marketplace), 0);
+        assertEq(sellerBalanceNFTAfter, sellerBalanceNFTBefore, "Incorrect seller amount");
+
+        assertEq(marketplaceBalanceNFTAfter, marketplaceBalanceNFTBefore, "Incorrect marketplace amount");
+
+        // Cannot buy a cancelled order
+        vm.prank(buyer);
+        paymentToken.approve(address(marketplace), totalSellPrice);
+        vm.expectRevert();
+        marketplace.buy(0, sellAmount);
+        vm.stopPrank();
+    }
+
     function test_SuccessfulBuyOrderWithPaymentToken() public {
         uint sellAmount = 500;
         uint sellPrice = 0.5 * 1e18;

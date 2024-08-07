@@ -231,6 +231,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
 
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
         Order storage order = orders[_orderId];
+        require(_buyAmount > 0, "Invali amount");
         require(_buyAmount <= order.left, "Not enough tokens to buy");
 
         INFT nft = INFT(order.collection);
@@ -266,12 +267,12 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     function cancel(uint _id) external {
         require(_id < orderCounter, "Invalid order id");
 
-        Order memory order = orders[_id];
+        Order storage order = orders[_id];
         require(order.owner == msg.sender, "Not token owner");
 
         IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
 
-        delete orders[_id];
+        order.left = 0;
 
         emit OrderCancelled(_id);
     }
