@@ -13,6 +13,18 @@ Foundry consists of:
 
 https://book.getfoundry.sh/
 
+## How to deploy
+In order to deploy the whole setup, you have to first create a .env file and fill it.
+
+```bash
+cp .env.example .env
+```
+
+Then you can start the deployment by running the following command:
+```bash
+forge script DeployerScript --rpc-url <RPC_URL>  --broadcast --verify --etherscan-api-key <POLYGONSCAN_API_KEY>
+```
+
 ## Deployments
 
 ### Amoy - 80002
