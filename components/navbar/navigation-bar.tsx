@@ -19,7 +19,7 @@ import {
   } from "@/components/ui/navigation-menu"
 
   import { ethers, providers, Signer } from 'ethers';
-  import {abi as FactoryAbi} from "../../contracts/out/NFTFactory.sol/NFTFactory.json"
+  import {abi as FactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 
   export function NavigationMenuBar() {
     //set state variables
