@@ -75,6 +75,13 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         factory = INFTFactory(msg.sender);
     }
 
+    /**
+     * @notice create a new singer
+     * @param _stageName stage name of the singer
+     * @param _description description of the singer
+     * @param _genre main genre of the singer
+     * @param _imageUrl url of the cover image of the singer
+     */
     function createSinger(
         string memory _stageName,
         string memory _description,
@@ -95,6 +102,12 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         singerIdCounter++;
     }
 
+    /**
+     * @notice create a new album (represented by a NFT)
+     * @param _shareCount number of shares
+     * @param _singerId id of the singer
+     * @param _metadataUrl url of the metadata of the NFT
+     */
     function createAlbum(
         uint256 _shareCount,
         uint256 _singerId,
@@ -113,7 +126,7 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
     }
 
     /**
-     * @notice returns an arraay with the singers in the specified range
+     * @notice return an array with the singers in the specified range
      * @param _start starting index (inclusive)
      * @param _end ending index (exclusive)
      */
@@ -128,23 +141,36 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         return array;
     }
 
+    /**
+     * @notice update the record company fee
+     * @param _newFee new fee
+     */
     function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         recordCompanyFee = _newFee;
     }
 
+    /**
+     * @notice update the record company treasury address
+     * @param _treasury new treasury address
+     */
     function updateRecordTreasury(address _treasury) external onlyRole(RECORD_COMPANY_ROLE) {
         treasury = _treasury;
     }
 
+    /**
+     * @notice return the uri of the specified token
+     * @param _id id of the token
+     */
     function uri(uint256 _id) public view override returns (string memory) {
         require(exists(_id), "Nonexistent token");
         return albums[_id].metadataUrl;
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view virtual override(AccessControl, ERC1155) returns (bool) {
-       return super.supportsInterface(_interfaceId);
-    }
-
+    /**
+     * @notice assign role _role to _account. If _role is the record company role, than it also associates _account to this NFT
+     * @param _role role to add
+     * @param _account account that receives the role
+     */
     function grantRole(bytes32 _role, address _account) public override onlyRole(getRoleAdmin(_role)) {
         _grantRole(_role, _account);
 
@@ -153,12 +179,23 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         }
     }
 
+    /**
+     * @notice revoke role _role from _account. If _role is the record company role, than it also 
+                removes the association of _account from this NFT
+     * @param _role role to remove
+     * @param _account account that looses the role
+     */
     function revokeRole(bytes32 _role, address _account) public override onlyRole(getRoleAdmin(_role)) {
         _revokeRole(_role, _account);
 
         if (_role == RECORD_COMPANY_ROLE) {
             factory.setAssociatedNFT(_account, address(0));
         }
+    }
+
+    // Needed to combine the interfaces for AccessControl and ERC1155
+    function supportsInterface(bytes4 _interfaceId) public view virtual override(AccessControl, ERC1155) returns (bool) {
+        return super.supportsInterface(_interfaceId);
     }
 
 }

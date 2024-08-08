@@ -14,12 +14,12 @@ contract NFTFactory is AccessControl, INFTFactory {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    /**P
-     * @dev Deploy a new NFT contract for a record company.
-     * @param _name Name of the token
-     * @param _recordCompanyAdmin Initial record company admin address
-     * @param _treasury Record company treasury
-     * @param _initialFee Initial fee for the record company
+    /**
+     * @dev deploy a new NFT contract for a record company.
+     * @param _name name of the token
+     * @param _recordCompanyAdmin initial record company admin address
+     * @param _treasury record company treasury
+     * @param _initialFee initial fee for the record company
      */
     function deployNFT(string memory _name, address _recordCompanyAdmin, address _treasury, uint _initialFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         NFT nft = new NFT(_name, _recordCompanyAdmin, _treasury, _initialFee);
@@ -31,10 +31,10 @@ contract NFTFactory is AccessControl, INFTFactory {
     }
 
     /**
-     * @notice Links an admin to a NFT
-     * @param _admin Address of the admin
-     * @param _nft Address of the NFT to link
-     * @dev This function can only be called by a NFT deployed by the factory
+     * @notice link an admin to a NFT
+     * @param _admin address of the admin
+     * @param _nft address of the NFT to link
+     * @dev this function can only be called by a NFT deployed by the factory
      */
     function setAssociatedNFT(address _admin, address _nft) external {
         require(isFactoryDeployed[msg.sender], "NFT is not factory deployed");
