@@ -47,6 +47,16 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
+    function test_SingerCreationWithSameName() public {
+        vm.startPrank(recordCompanyAdmin);
+
+        nft.createSinger("Name", "Desc", "Genre", "https://...");
+        vm.expectRevert();
+        nft.createSinger("Name", "Desc2", "Genre2", "https://...");
+
+        vm.stopPrank();
+    }
+
     function test_SingerGetter() public {
         vm.startPrank(recordCompanyAdmin);
 

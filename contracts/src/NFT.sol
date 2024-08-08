@@ -81,7 +81,7 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         string memory _genre,
         string memory _imageUrl
     ) external onlyRole(RECORD_COMPANY_ROLE) {
-        require(!singerExists[_stageName], "Singer already exists");
+        require(! singerExists[_stageName] , "Singer already exists");
 
         Singer storage singer = singers[singerIdCounter];
         singer.stageName = _stageName;
@@ -89,6 +89,8 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
         singer.genre = _genre;
         singer.imageUrl = _imageUrl;
         singer.exists = true;
+
+        singerExists[_stageName] = true;
 
         singerIdCounter++;
     }
@@ -100,16 +102,12 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
     ) external onlyRole(RECORD_COMPANY_ROLE) {
         require(singers[_singerId].exists, "Singer does not exist");
 
-        
         Album storage album = albums[albumIdCounter];
         album.metadataUrl = _metadataUrl;
         album.singerId = _singerId;
         album.shareCount = _shareCount;
 
         _mint(msg.sender, albumIdCounter, _shareCount, "");
-
-        // Add the marketplace address to the whitelist
-        // Marketplace contract address should be passed and managed appropriately
 
         albumIdCounter++;
     }
