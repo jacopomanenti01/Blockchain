@@ -6,7 +6,7 @@ import Step2 from "./step-2";
 import Step3 from "./step-3";
 import { ethers, providers, Signer } from 'ethers';
 import buildMultiStepForm from "@/lib/multi-step-form/index";
-import {abi as NFTAbi} from "../../../contracts/out/NFT.sol/NFT.json"
+import {abi as NFTAbi} from "@/contracts/out/NFT.sol/NFT.json"
 
 
 //  1 - Define the full fields for the entire form
@@ -40,17 +40,13 @@ export const CampaignFormSchema = z.object({
 	}) // Force it to be a number
     .int() // Make sure it's an integer
     ,
-	song: z.string({
-				message: "please enter the title of the album (eg. dark side of the moon, ...)"
-			}).min(1, 
-				{
-					message: "please enter a title"
-				}),
+	song: z.array(z.string().min(1, { message: "Please enter a valid song" })),
+
 	shareCount: z.coerce.number() // Force it to be a number
     .int() // Make sure it's an integer
     ,
     singerId: z.coerce.number().int(),  
-	//url: z.string().url(),
+	url_image: z.string(),
 });
 
 //  2 - create the type
@@ -65,13 +61,18 @@ export const initialFormData: CampaignFormType = {
 	singerId:0,
 	title: "",
 	year: 0, 
-	song: ""
+	song: [""],
+	url_image: ""
 };
 
 //  4 - Define the final end step submit function
 const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 	console.log("Your custom save function");
 	console.log(values);
+	
+	const web3prov = new providers.Web3Provider(window.ethereum)
+	const web3signer = web3prov.getSigner()
+	const web3contract = new ethers.Contract("0x243d7046ADd1354e40284e306D5268a80Cba868e", NFTAbi, web3signer)
 	let CID = ""
 
 	try {
@@ -86,20 +87,19 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 
 		const resData = await res.json();		
 		CID = resData.IpfsHash;
-		console.log(CID)
 	  } catch (e) {
 		console.log(e);
 		alert("Trouble uploading file");
 	  } 
 	  try{ 
-		const web3prov = new providers.Web3Provider(window.ethereum)
-		const web3signer = web3prov.getSigner()
-		const web3contract = new ethers.Contract("0x46B48A76747437742a41b31b661cf325B55Bd182", NFTAbi, web3signer)
-		console.log(web3contract)
+		const tx = await web3contract.createAlbum(values.shareCount, values.singerId, `https://blush-active-cephalopod-524.mypinata.cloud/ipfs/${CID}`)
+		await tx.wait()
+		console.log(tx.hash)
     } catch (e) {
       console.log(e);
       alert("Trouble uploading file");
     } 
+	
 };
 
 //  5 - Define the steps and sub-forms and each field for step

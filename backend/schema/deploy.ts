@@ -18,7 +18,9 @@ export const deploy = z.object({
     }).length(42, 
         {
             message: "etherum address are 42 long"
-        })
+        }),
+    initialFee: z.coerce.number() 
+    .int() 
     
   })
 

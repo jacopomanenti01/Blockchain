@@ -11,6 +11,15 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 import {deploy} from "@/backend/schema/deploy"
 import { useForm } from "react-hook-form"
@@ -18,8 +27,8 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {z} from "zod"
-import { ethers, providers, Signer } from 'ethers';
-import {abi as FactoryAbi} from "../../contracts/out/NFTFactory.sol/NFTFactory.json"
+import { ethers, providers} from 'ethers';
+import {abi as FactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 
 
 
@@ -37,37 +46,28 @@ function page() {
       recordName: "",
       recordAddress:"",
       recordTreasury:"",
+      initialFee:0,
     }
   })
 
-  const onSubmit = async(data: z.infer<typeof deploy>)=>{
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      
-      // Create blob dal JSON
-      const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-
-      formData.append("file", jsonBlob, "file.json");
-
-
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-
-      const resData = await res.json();
-      
-      setCid(resData.IpfsHash);
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setLoading(false);
-      alert("Trouble uploading file");
+  const onSubmit = async (data: z.infer<typeof deploy>)=>{
+    
+    setLoading(true)
+    const provider = new providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
+    const contract = new ethers.Contract("0x604D03DA814dA89671b91e4a8E9B35064ED4c5B7", FactoryAbi, signer);
+      try{
+      const tx = await contract.deployNFT(data.recordName,data.recordAddress,data.recordTreasury, data.initialFee)
+      await tx.wait()
+      console.log(tx.hash)
+      setLoading(false)
+      }catch{
+        alert("nuuuuuuu")
+        setLoading(false)
+      }
+    
     }
-  };
+  
 
 
   return (
@@ -78,6 +78,8 @@ function page() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="spacce-y-6">
             <div className='space-y-4'>
+
+
                 <FormField
 
                 control={form.control}
@@ -125,6 +127,21 @@ function page() {
                 )}
                 
                 />
+              <FormField
+
+                control={form.control}
+                name="initialFee"
+                render={({field})=>(
+                    <FormItem>
+                      <FormLabel>Initial Fee</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="initialFee" placeholder='10'/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                
+                />  
                 
             </div>
             <div className='my-2'>
