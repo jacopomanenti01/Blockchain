@@ -21,6 +21,8 @@ import {
   import { ethers, providers, Signer } from 'ethers';
   import {abi as FactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 
+  import { useAccount } from 'wagmi';
+
   export function NavigationMenuBar() {
     //set state variables
     const [userAddress, setUserAddress] = useState<string>(localStorage.getItem('userAddress') || '');
@@ -30,56 +32,61 @@ import {
     const [isAdmin, setIsAdmin] = useState<boolean>(JSON.parse(localStorage.getItem('isAdmin') || 'false'));
     const [isRecord, setIsRecord] = useState<boolean>(JSON.parse(localStorage.getItem('isRecord') || 'false'));
 
+    const { address, isConnected } = useAccount();
+
     //set roles
     const DEFAULT_ADMIN_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("DEFAULT_ADMIN_ROLE"));
+  //   useEffect(() => {
+  //     const storedUserAddress = localStorage.getItem('userAddress');
+  //     if (storedUserAddress) {
+  //         setUserAddress(storedUserAddress);
+  //     }
 
+  //     if (window.ethereum == null) {
+  //         console.log("MetaMask not installed; using read-only defaults");
+  //     } else if (window.ethereum) {
+  //         const provider = new ethers.providers.Web3Provider(window.ethereum);
+  //         provider.listAccounts().then((accounts) => {
+  //           console.log("Accounts:", accounts)
+  //           if (accounts.length > 0) {
+  //               setUserAddress(accounts[0]);
+  //               localStorage.setItem('userAddress', accounts[0]);
+  //           } else {
+  //               setUserAddress('');
+  //               setProvider(null);
+  //               setSigner(null);
+  //               setContract(null);
+  //               setIsAdmin(false);
+  //               setIsRecord(false);
+  //               localStorage.removeItem('userAddress');
+  //               localStorage.removeItem('provider');
+  //               localStorage.removeItem('signer');
+  //               localStorage.removeItem('contract');
+  //               localStorage.removeItem('isAdmin');
+  //               localStorage.removeItem('isRecord');
+  //           }
+  //         })
+  //         // window.ethereum.on('accountsChanged', (accounts: string[]) => {
+              
+  //         // });
+  //     }
 
-    useEffect(() => {
-      const storedUserAddress = localStorage.getItem('userAddress');
-      if (storedUserAddress) {
-          setUserAddress(storedUserAddress);
-      }
-
-      if (window.ethereum == null) {
-          console.log("MetaMask not installed; using read-only defaults");
-      } else if (window.ethereum) {
-          window.ethereum.on('accountsChanged', (accounts: string[]) => {
-              if (accounts.length > 0) {
-                  setUserAddress(accounts[0]);
-                  localStorage.setItem('userAddress', accounts[0]);
-              } else {
-                  setUserAddress('');
-                  setProvider(null);
-                  setSigner(null);
-                  setContract(null);
-                  setIsAdmin(false);
-                  setIsRecord(false);
-                  localStorage.removeItem('userAddress');
-                  localStorage.removeItem('provider');
-                  localStorage.removeItem('signer');
-                  localStorage.removeItem('contract');
-                  localStorage.removeItem('isAdmin');
-                  localStorage.removeItem('isRecord');
-              }
-          });
-      }
-
-      return () => {
-          if (window.ethereum) {
-              window.ethereum.removeListener('accountsChanged', () => {});
-          }
-      };
-  }, []); 
+  //     return () => {
+  //         if (window.ethereum) {
+  //             window.ethereum.removeListener('accountsChanged', () => {});
+  //         }
+  //     };
+  // }); 
 
 
     useEffect(() => {
 
         const fetchAddress = async () => {
-                if (userAddress.length > 0) {
+                if (isConnected) {
                     try {
                         const provider = new ethers.providers.Web3Provider(window.ethereum);
-                        const signer = provider.getSigner();
                         // const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
+                        const signer = provider.getSigner();
                         const contract = new ethers.Contract("0x604D03DA814dA89671b91e4a8E9B35064ED4c5B7", FactoryAbi, signer);
                         setProvider(provider);
                         setSigner(signer)
@@ -97,7 +104,7 @@ import {
                 }
  
         fetchAddress()
-          }, [userAddress]);
+          }, [address]);
 
   
     
@@ -113,11 +120,11 @@ import {
                 console.log('Admin Role for MY_ROLE:', adminRole);
     
                 // Check if the address has the admin role
-                const isAdmin = await contract.hasRole(adminRole, userAddress);
-                console.log(`${userAddress} is admin:`, isAdmin);
+                const isAdmin = await contract.hasRole(adminRole, address);
+                console.log(`${address} is admin:`, isAdmin);
                 setIsAdmin(isAdmin);
                 if (!isAdmin){
-                  const checkRecord = await contract.associatedNFT(userAddress)
+                  const checkRecord = await contract.associatedNFT(address)
                   console.log(checkRecord)
                   if(checkRecord !="0x0000000000000000000000000000000000000000"){
                   setIsRecord(true)
@@ -132,12 +139,13 @@ import {
         };
     
         useEffect(() => {
-            if (userAddress && contract) {
+          console.log("Test", address, contract)
+            if (address && contract) {
                 checkIfAddressIsAdmin();
             }
-        }, [userAddress, contract]);
+        }, [address, contract]);
 
-  
+      
 
     return (
       <NavigationMenu>
