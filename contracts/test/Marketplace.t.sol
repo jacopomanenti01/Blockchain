@@ -333,10 +333,10 @@ contract MarketplaceTest is Test {
         assertEq(sellerBalanceBefore - sellerBalanceAfter, sellAmount, "Incorrect balances for seller");
         assertEq(marketplaceBalanceAfterCreateOrder, sellAmount, "Incorrect balances for marketplace after create order");
         
-        (uint auctionId, address payT, uint effBasePrice, uint effMinIncrement, uint deadline, 
+        (uint tokenId, address payT, uint effBasePrice, uint effMinIncrement, uint deadline, 
             uint highestBid, uint amount, address effSeller, address collection, address highestBidder) = marketplace.auctions(0);
         
-        assertEq(auctionId, 0, "Incorrect auction id");
+        assertEq(tokenId, 0, "Incorrect token id id");
         assertEq(payT, address(paymentToken), "Incorrect payment token");
         assertEq(effBasePrice, basePrice, "Incorrect base price");
         assertEq(effMinIncrement, minIncrement, "Incorrect minimum increment");
@@ -440,10 +440,10 @@ contract MarketplaceTest is Test {
         assertEq(sellerBalanceBefore - sellerBalanceAfter, sellAmount, "Incorrect balances for seller");
         assertEq(marketplaceBalanceAfterCreateOrder, sellAmount, "Incorrect balances for marketplace after create order");
         
-        (uint auctionId, address payT, uint effBasePrice, uint effMinIncrement, uint deadline, 
+        (uint tokenId, address payT, uint effBasePrice, uint effMinIncrement, uint deadline, 
             uint highestBid, uint amount, address effSeller, address collection, address highestBidder) = marketplace.auctions(0);
         
-        assertEq(auctionId, 0, "Incorrect auction id");
+        assertEq(tokenId, 0, "Incorrect token id");
         assertEq(payT, address(0), "Incorrect payment token");
         assertEq(effBasePrice, basePrice, "Incorrect base price");
         assertEq(effMinIncrement, minIncrement, "Incorrect minimum increment");
@@ -618,5 +618,150 @@ contract MarketplaceTest is Test {
         assertEq(orders[1].owner, address(0), "Incorrect owner at id 1");
         assertEq(orders[1].collection, address(0), "Incorrect collecton at id 1");
 
+    }
+
+    function test_AuctionsGetterNoOwnerNoBidder() public {
+        vm.startPrank(seller);
+        nft.safeTransferFrom(seller, seller2, 0, 15, "");
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 50, 1 * 1e18, 0.05 * 1e18, block.timestamp + 3600, address(paymentToken));
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 15, 1.1 * 1e18, 0.1 * 1e18, block.timestamp + 3600, address(0));
+        vm.stopPrank();
+
+        // bid for second auction
+        vm.startPrank(bidder1);
+        marketplace.bid{value: 1.5 * 1e18}(1, 0);
+        vm.stopPrank();
+
+        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(0), address(0));
+
+        // Checks
+        assertEq(effSize, 2, "Incorrect length");
+
+        assertEq(auctions[0].paymentToken, address(paymentToken), "Incorrect payment token at id 0");
+        assertEq(auctions[0].amount, 50, "Incorrect amount at id 0");
+        assertEq(auctions[0].basePrice, 1 * 1e18, "Incorrect base price at id 0");
+        assertEq(auctions[0].minIncrement, 0.05 * 1e18, "Incorrect min incremenet at id 0");
+        assertEq(auctions[0].deadline, block.timestamp + 3600, "Incorrect deadline at id 0");
+        assertEq(auctions[0].highestBid, 0, "Incorrect highest bid at id 0");
+        assertEq(auctions[0].highestBidder, address(0), "Incorrect highest bidder at id 0");
+        assertEq(auctions[0].tokenId, 0, "Incorrect token id at id 0");
+        assertEq(auctions[0].owner, seller, "Incorrect owner at id 0");
+        assertEq(auctions[0].collection, address(nft), "Incorrect collecton at id 0");
+
+        assertEq(auctions[1].paymentToken, address(0), "Incorrect payment token at id 1");
+        assertEq(auctions[1].amount, 15, "Incorrect amount at id 1");
+        assertEq(auctions[1].basePrice, 1.1 * 1e18, "Incorrect base price at id 1");
+        assertEq(auctions[1].minIncrement, 0.1 * 1e18, "Incorrect min incremenet at id 1");
+        assertEq(auctions[1].deadline, block.timestamp + 3600, "Incorrect deadline at id 1");
+        assertEq(auctions[1].highestBid, 1.5 * 1e18, "Incorrect highest bid at id 1");
+        assertEq(auctions[1].highestBidder, address(bidder1), "Incorrect highest bidder at id 1");
+        assertEq(auctions[1].tokenId, 0, "Incorrect token id at id 1");
+        assertEq(auctions[1].owner, seller2, "Incorrect owner at id 1");
+        assertEq(auctions[1].collection, address(nft), "Incorrect collecton at id 1");
+    }
+
+    function test_AuctionsGetterNoOwnerWithBidder() public {
+        vm.startPrank(seller);
+        nft.safeTransferFrom(seller, seller2, 0, 15, "");
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 50, 1 * 1e18, 0.05 * 1e18, block.timestamp + 3600, address(paymentToken));
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 15, 1.1 * 1e18, 0.1 * 1e18, block.timestamp + 3600, address(0));
+        vm.stopPrank();
+
+        // bid for second auction
+        vm.startPrank(bidder1);
+        marketplace.bid{value: 1.5 * 1e18}(1, 0);
+        vm.stopPrank();
+
+        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(0), address(bidder1));
+
+        // Checks
+        assertEq(effSize, 1, "Incorrect length");
+
+        assertEq(auctions[0].paymentToken, address(0), "Incorrect payment token at id 0");
+        assertEq(auctions[0].amount, 15, "Incorrect amount at id 0");
+        assertEq(auctions[0].basePrice, 1.1 * 1e18, "Incorrect base price at id 0");
+        assertEq(auctions[0].minIncrement, 0.1 * 1e18, "Incorrect min incremenet at id 0");
+        assertEq(auctions[0].deadline, block.timestamp + 3600, "Incorrect deadline at id 0");
+        assertEq(auctions[0].highestBid, 1.5 * 1e18, "Incorrect highest bid at id 0");
+        assertEq(auctions[0].highestBidder, address(bidder1), "Incorrect highest bidder at id 0");
+        assertEq(auctions[0].tokenId, 0, "Incorrect token id at id 0");
+        assertEq(auctions[0].owner, seller2, "Incorrect owner at id 0");
+        assertEq(auctions[0].collection, address(nft), "Incorrect collecton at id 0");
+    }
+
+    function test_AuctionsGetterWithOwnerNoBidder() public {
+        vm.startPrank(seller);
+        nft.safeTransferFrom(seller, seller2, 0, 15, "");
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 50, 1 * 1e18, 0.05 * 1e18, block.timestamp + 3600, address(paymentToken));
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 15, 1.1 * 1e18, 0.1 * 1e18, block.timestamp + 3600, address(0));
+        vm.stopPrank();
+
+        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(seller), address(0));
+
+        // Checks
+        assertEq(effSize, 1, "Incorrect length");
+
+        assertEq(auctions[0].paymentToken, address(paymentToken), "Incorrect payment token at id 0");
+        assertEq(auctions[0].amount, 50, "Incorrect amount at id 0");
+        assertEq(auctions[0].basePrice, 1 * 1e18, "Incorrect base price at id 0");
+        assertEq(auctions[0].minIncrement, 0.05 * 1e18, "Incorrect min incremenet at id 0");
+        assertEq(auctions[0].deadline, block.timestamp + 3600, "Incorrect deadline at id 0");
+        assertEq(auctions[0].highestBid, 0, "Incorrect highest bid at id 0");
+        assertEq(auctions[0].highestBidder, address(0), "Incorrect highest bidder at id 0");
+        assertEq(auctions[0].tokenId, 0, "Incorrect token id at id 0");
+        assertEq(auctions[0].owner, seller, "Incorrect owner at id 0");
+        assertEq(auctions[0].collection, address(nft), "Incorrect collecton at id 0");
+    }
+
+    function test_AuctionsGetterWithOwnerWithBidder() public {
+        vm.startPrank(seller);
+        nft.safeTransferFrom(seller, seller2, 0, 15, "");
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 50, 1 * 1e18, 0.05 * 1e18, block.timestamp + 3600, address(paymentToken));
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createAuction(address(nft), 0, 15, 1.1 * 1e18, 0.1 * 1e18, block.timestamp + 3600, address(0));
+        vm.stopPrank();
+
+        // bid for second auction
+        vm.startPrank(bidder1);
+        marketplace.bid{value: 1.5 * 1e18}(1, 0);
+        vm.stopPrank();
+
+        // Empty case check
+        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(seller), address(bidder1));
+        assertEq(effSize, 0, "Incorrect length");
+
+        // Check
+        (auctions, effSize) = marketplace.getAuctions(0, 2, address(seller2), address(bidder1));
+        assertEq(effSize, 1, "Incorrect length");
+
+        assertEq(auctions[0].paymentToken, address(0), "Incorrect payment token at id 0");
+        assertEq(auctions[0].amount, 15, "Incorrect amount at id 0");
+        assertEq(auctions[0].basePrice, 1.1 * 1e18, "Incorrect base price at id 0");
+        assertEq(auctions[0].minIncrement, 0.1 * 1e18, "Incorrect min incremenet at id 0");
+        assertEq(auctions[0].deadline, block.timestamp + 3600, "Incorrect deadline at id 0");
+        assertEq(auctions[0].highestBid, 1.5 * 1e18, "Incorrect highest bid at id 0");
+        assertEq(auctions[0].highestBidder, address(bidder1), "Incorrect highest bidder at id 0");
+        assertEq(auctions[0].tokenId, 0, "Incorrect token id at id 0");
+        assertEq(auctions[0].owner, seller2, "Incorrect owner at id 0");
+        assertEq(auctions[0].collection, address(nft), "Incorrect collecton at id 0");
     }
 }

@@ -27,7 +27,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     }
 
     struct Auction { // auction details for a single order
-        uint auctionId;     // auction ID, starting from 1
+        uint tokenId;
         address paymentToken; // if token is address(0), it means native coin
         uint basePrice;
         uint minIncrement;
@@ -157,7 +157,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
         Auction storage auction = auctions[auctionCounter];
-        auction.auctionId = auctionCounter;
         auction.paymentToken = _paymentToken;
         auction.basePrice = _basePrice;
         auction.minIncrement = _minIncrement;
@@ -167,6 +166,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         auction.owner = msg.sender;
         auction.collection = _collection;
         auction.highestBidder = address(0);
+        auction.tokenId = _tokenId;
 
         isAuction[auctionCounter] = true;
     
@@ -241,10 +241,10 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
                 IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
             }
 
-            IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, auction.amount, "");
+            IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.tokenId, auction.amount, "");
         } else {
             // Auction failed case -> return tokens to the owner
-            IERC1155(auction.collection).safeTransferFrom(address(this), auction.owner, auction.auctionId, auction.amount, "");
+            IERC1155(auction.collection).safeTransferFrom(address(this), auction.owner, auction.tokenId, auction.amount, "");
         }
         
         emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
