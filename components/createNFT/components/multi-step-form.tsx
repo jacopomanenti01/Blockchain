@@ -1,5 +1,5 @@
 import { containerCurrentForm as container } from "./framer-motion";
-import type { UseMultiStepFormTypeOptions } from "../../types/multi-step-form";
+import type { UseMultiStepFormTypeOptions } from "../../../app/types/multi-step-form";
 import { motion } from "framer-motion";
 import { type Context, useCallback, useContext } from "react";
 import type { SubmitErrorHandler, SubmitHandler } from "react-hook-form";

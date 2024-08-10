@@ -5,24 +5,23 @@ const JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaW
 const PINATABASEURL = 'https://blush-active-cephalopod-524.mypinata.cloud/ipfs/'
 
 import { NextResponse } from "next/server"
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest } from 'next/server';
 
 const pinata = new pinataSDK(API_KEY, API_KEY_SECRET);
 
-
-export default async function GET(req: NextApiRequest, res: NextApiResponse) {
-    // Extract the CID from query parameters
-    const { cid } = req.query;
+export async function GET(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const cid = searchParams.get('cid');
 
     if (!cid) {
-        return res.status(400).json({ error: "CID is required" });
+        return NextResponse.json({ error: "CID is required" }, { status: 400 });
     }
 
     try {
-        // URL to access the file via pinata
+        // URL to access the file via Pinata
         const url = `${PINATABASEURL}${cid}`;
 
-        // HTTP req. to retrieve the file
+        // HTTP request to retrieve the file
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -31,12 +30,11 @@ export default async function GET(req: NextApiRequest, res: NextApiResponse) {
 
         const data = await response.json();
 
-        // return json data
-        return res.status(200).json(data);
+        // Return the JSON data
+        return NextResponse.json(data, { status: 200 });
 
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: "Failed to retrieve the file from IPFS" });
+        return NextResponse.json({ error: "Failed to retrieve the file from IPFS" }, { status: 500 });
     }
 }
-

@@ -34,7 +34,7 @@ import {abi as FactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 
 
 
-function page() {
+function Page() {
 
   const [loading, setLoading] = useState(false)
   const [cid, setCid] = useState("");
@@ -159,4 +159,4 @@ function page() {
   )
 }
 
-export default page
+export default Page

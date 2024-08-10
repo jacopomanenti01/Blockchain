@@ -1,9 +1,9 @@
 "use client";
-import { containerMultiStepNavbar as container } from "../../../app/mint/components/framer-motion"
+import { containerMultiStepNavbar as container } from "../../createNFT/components/framer-motion"
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { motion } from "framer-motion"
-import { useMultiStepForm } from "../../../app/mint/components/multi-step-form";
+import { useMultiStepForm } from "../../createNFT/components/multi-step-form";
 import type { Context } from "react";
 import type { UseMultiStepFormTypeOptions } from "../../../app/types/multi-step-form";
 

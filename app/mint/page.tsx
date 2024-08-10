@@ -1,5 +1,5 @@
 import Navbar from "@/components/navbar/page";
-import MultiStepCampaign from "./components/multi-step-campaign";
+import MultiStepCampaign from "../../components/createNFT/components/multi-step-campaign";
 
 const Campaign = () => {
 	return (

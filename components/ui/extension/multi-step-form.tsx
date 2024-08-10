@@ -1,7 +1,7 @@
 "use client";
-import { containerMultiStepForm as container } from "../../../app/mint/components/framer-motion";
-import { CampaignFormContext } from "../../../app/mint/components/multi-step-campaign-config";
-import { useMultiStepForm } from "../../../app/mint/components/multi-step-form";
+import { containerMultiStepForm as container } from "../../createNFT/components/framer-motion";
+import { CampaignFormContext } from "../../createNFT/components/multi-step-campaign-config";
+import { useMultiStepForm } from "../../createNFT/components/multi-step-form";
 import { motion } from "framer-motion";
 import { Form } from "@/components/ui/form";
 import React, { PropsWithChildren } from "react";

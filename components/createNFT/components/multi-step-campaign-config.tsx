@@ -1,9 +1,8 @@
-import type { Form, UseMultiStepFormTypeOptions } from "../../types/multi-step-form";
+import type { Form, UseMultiStepFormTypeOptions } from "../../../app/types/multi-step-form";
 import type { SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import Step1 from "./step-1";
 import Step2 from "./step-2";
-import Step3 from "./step-3";
 import { ethers, providers, Signer } from 'ethers';
 import buildMultiStepForm from "@/lib/multi-step-form/index";
 import {abi as NFTAbi} from "@/contracts/out/NFT.sol/NFT.json"

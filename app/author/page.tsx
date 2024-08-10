@@ -7,7 +7,7 @@ import Banner from "../../components/banner/banner"
 import Navbar from '@/components/navbar/page'
 
 
-function page() {
+function Page() {
     const [collectiables, setCollectiables] = useState(true);
     const [created, setCreated] = useState(false);
     const [like, setLike] = useState(false);
@@ -37,4 +37,4 @@ function page() {
   )
 }
 
-export default page
+export default Page

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useMultiStepForm } from "../../../app/mint/components/multi-step-form";
+import { useMultiStepForm } from "../../createNFT/components/multi-step-form";
 import type { Context } from "react";
 import type { UseMultiStepFormTypeOptions } from "../../../app/types/multi-step-form";
 

@@ -23,7 +23,7 @@ const UploadFile: React.FC<UploadFileProps> = ({ onDrop, file }) => {
               })}
             >
               <input {...getInputProps()} />
-              <p>Drag'n'drop images, or click to select files</p>
+              <p>Drag and drop images, or click to select files</p>
             </div>
           );
         }}
