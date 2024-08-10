@@ -563,10 +563,10 @@ contract MarketplaceTest is Test {
 
         // (address[] memory payTs, uint[] memory prices, uint[] memory amounts, uint[] memory lefts,  
         //     uint[] memory ids, address[] memory effSellers, address[] memory collections) = marketplace.getOrders(0, 2, address(0));
-        Marketplace.Order[] memory orders = marketplace.getOrders(0, 2, address(0));
+        (Marketplace.Order[] memory orders, uint effSize) = marketplace.getOrders(0, 2, address(0));
 
         // Checks
-        assertEq(orders.length, 2, "Incorrect length");
+        assertEq(effSize, 2, "Incorrect length");
 
         assertEq(orders[0].paymentToken, address(0), "Incorrect payment token at id 0");
         assertEq(orders[0].price, 2 * 1e18, "Incorrect price at id 0");
@@ -583,6 +583,40 @@ contract MarketplaceTest is Test {
         assertEq(orders[1].tokenId, 0, "Incorrect token id at id 1");
         assertEq(orders[1].owner, seller2, "Incorrect owner at id 1");
         assertEq(orders[1].collection, address(nft), "Incorrect collecton at id 1");
+    }
+
+    function test_OrdersGetterWithOwner() public {
+        vm.startPrank(seller);
+        nft.safeTransferFrom(seller, seller2, 0, 10, "");
+        nft.setApprovalForAll(address(marketplace), true);
+        marketplace.createOrder(address(nft), 0, 50, 2 * 1e18, address(0));
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+        nft.setApprovalForAll(address(marketplace), true);
+        marketplace.createOrder(address(nft), 0, 10, 1.5 * 1e18, address(paymentToken));
+        vm.stopPrank();
+
+        (Marketplace.Order[] memory orders, uint effSize) = marketplace.getOrders(0, 2, seller2);
+
+        // Checks
+        assertEq(effSize, 1, "Incorrect length");
+
+        assertEq(orders[0].paymentToken, address(paymentToken), "Incorrect payment token at id 0");
+        assertEq(orders[0].price, 1.5 * 1e18, "Incorrect price at id 0");
+        assertEq(orders[0].amount, 10, "Incorrect amount at id 0");
+        assertEq(orders[0].left, 10, "Incorrect left amount at id 0");
+        assertEq(orders[0].tokenId, 0, "Incorrect token id at id 0");
+        assertEq(orders[0].owner, seller2, "Incorrect owner at id 0");
+        assertEq(orders[0].collection, address(nft), "Incorrect collecton at id 0");
+
+        assertEq(orders[1].paymentToken, address(0), "Incorrect payment token at id 1");
+        assertEq(orders[1].price, 0, "Incorrect price at id 1");
+        assertEq(orders[1].amount, 0, "Incorrect amount at id 1");
+        assertEq(orders[1].left, 0, "Incorrect left amount at id 1");
+        assertEq(orders[1].tokenId, 0, "Incorrect token id at id 1");
+        assertEq(orders[1].owner, address(0), "Incorrect owner at id 1");
+        assertEq(orders[1].collection, address(0), "Incorrect collecton at id 1");
 
     }
 }

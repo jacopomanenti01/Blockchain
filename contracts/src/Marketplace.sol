@@ -309,7 +309,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _end ending index (exclusive)
      * @param _owner eventual filter of the orders. If it is equal to address(0), returns all orders
      */
-    function getOrders(uint _start, uint _end, address _owner) external view returns (Order[] memory) {
+    function getOrders(uint _start, uint _end, address _owner) external view returns (Order[] memory, uint) {
         require(_end <= orderCounter, "Invalid end");
         require (_start < _end, "Start must be smaller than end");
 
@@ -324,7 +324,32 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
             }
         }
 
-        return array;
+        return (array, effIdx);
+    }
+
+    /**
+     * @notice return the auctions based on the provided indices 
+     * @param _start starting index (inclusive)
+     * @param _end ending index (exclusive)
+     * @param _owner eventual filter of the auction. If it is equal to address(0), ignores the owner
+     * @param _bidder eventual filter of the auction. If it is equal to address(0), ignores the highestBidder
+     */
+    function getAuctions(uint _start, uint _end, address _owner, address _bidder) external view returns (Auction[] memory, uint) {
+        require(_end <= auctionCounter, "Invalid end");
+        require (_start < _end, "Start must be smaller than end");
+
+        uint effIdx = 0;
+        Auction[] memory array = new Auction[](_end - _start);
+        
+        for (uint i = _start; i < _end; i++) {
+            Auction memory auction = auctions[i];
+            if ((_owner == address(0) || auction.owner == _owner) && (_bidder == address(0) || _bidder == auction.highestBidder)) {
+                array[effIdx] = auction;
+                effIdx++;
+            }
+        }
+
+        return (array, effIdx);
     }
 
     // Internal function to process ETH payments
