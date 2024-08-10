@@ -10,7 +10,7 @@ contract NFTFactory is AccessControl, INFTFactory {
 
     mapping (address => bool) public isFactoryDeployed;
     mapping (address => address) public associatedNFT;
-    mapping (uint => address) private deployedNFTs;
+    mapping (uint => address) public deployedNFTs;
 
     uint public nextNFTId;
 
@@ -60,9 +60,9 @@ contract NFTFactory is AccessControl, INFTFactory {
      * @param _start starting NFT index (inclusive)
      * @param _end ending NFT index (exclusive)
      * @param _limit max amount of items to collect
-     * @dev return four arrays containgin respectively: nft address, token id, amount owned and relative uri
+     * @dev return four arrays (containgin respectively: nft address, token id, amount owned and relative uri) and the effective number of NFTs
      */
-    function batchGetNFTs(address _owner, uint _start, uint _end, uint _limit) external view returns (address[] memory, uint[] memory, uint[] memory, string[] memory) {
+    function batchGetNFTs(address _owner, uint _start, uint _end, uint _limit) external view returns (address[] memory, uint[] memory, uint[] memory, string[] memory, uint) {
         address[] memory nfts = new address[](_limit);
         uint[] memory tokenIds = new uint[](_limit);
         uint[] memory amounts = new uint[](_limit);
@@ -85,7 +85,7 @@ contract NFTFactory is AccessControl, INFTFactory {
             }
         }
 
-        return (nfts, tokenIds, amounts, uris);
+        return (nfts, tokenIds, amounts, uris, globalId);
     }
 
 }
