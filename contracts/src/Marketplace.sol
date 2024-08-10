@@ -303,6 +303,30 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit OrderCancelled(_id);
     }
 
+    /**
+     * @notice return the orders based on the provided indices 
+     * @param _start starting index (inclusive)
+     * @param _end ending index (exclusive)
+     * @param _owner eventual filter of the orders. If it is equal to address(0), returns all orders
+     */
+    function getOrders(uint _start, uint _end, address _owner) external view returns (Order[] memory) {
+        require(_end <= orderCounter, "Invalid end");
+        require (_start < _end, "Start must be smaller than end");
+
+        uint effIdx = 0;
+        Order[] memory array = new Order[](_end - _start);
+        
+        for (uint i = _start; i < _end; i++) {
+            Order memory order = orders[i];
+            if (_owner == address(0) || order.owner == _owner) {
+                array[effIdx] = order;
+                effIdx++;
+            }
+        }
+
+        return array;
+    }
+
     // Internal function to process ETH payments
     function processPaymentETH(address _to, uint _amount, string memory _error) internal {
         (bool success, ) = address(_to).call{value: _amount}("");
