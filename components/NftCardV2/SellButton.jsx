@@ -10,44 +10,59 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "../ui/button";
 
-import React from 'react'
+import React, {useState} from 'react'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Copy } from "lucide-react"
+import FormHandler from "./FormHandler"
+
+export const Context = React.createContext()
   
   function SellButton() {
+    const [open, setOpen] = useState(false);
+
+    // chiamare la funzione nft.isApprovedForAll(marketplace address
+
     return (
     <div>
-      <Dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
               <Button className="px-9 py-3 text-lg font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600">
                 sell
-                </Button>
+              </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
+          {/** Header */}
           <DialogHeader>
-            <DialogTitle>Share link</DialogTitle>
+            <DialogTitle>Sell or 
+            put up for auction your NFT</DialogTitle>
+
             <DialogDescription>
-              Anyone who has this link will be able to view this.
+              Click one of the two button below to sell or list your album's royalties.
             </DialogDescription>
           </DialogHeader>
+
+          {/** body*/}
+          <Context.Provider value = {[open, setOpen]}>
           <div className="flex items-center space-x-2">
+
+
             <div className="grid flex-1 gap-2">
-              <Label htmlFor="link" className="sr-only">
-                Link
-              </Label>
+              <FormHandler/>
   
-              <Input
-                id="link"
-                defaultValue="https://ui.shadcn.com/docs/installation"
-                readOnly
-              />
+              
+
+
             </div>
-            <Button type="submit" size="sm" className="px-3">
-              <span className="sr-only">Copy</span>
-              <Copy className="h-4 w-4" />
-            </Button>
+
+
+           
+
+
           </div>
+          </Context.Provider>
+
+          {/**close*/}
           <DialogFooter className="sm:justify-start">
             <DialogClose asChild>
               <Button type="button" variant="secondary">

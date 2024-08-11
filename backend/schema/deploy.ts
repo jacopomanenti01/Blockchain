@@ -66,3 +66,82 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
     
     
   })
+
+
+  // Form for selling NFTs
+
+  export const sell = z.object({
+    
+    amount: z.coerce.number({
+        
+        required_error: "amount is required",
+        invalid_type_error: "amount must be a number"
+    }) 
+    .int().gte(1,{
+        message: "please enter at leat 1 share",
+    }),
+    price: z.coerce.number({
+        
+        required_error: "price is required",
+        invalid_type_error: "price must be a number"
+    }) 
+    .int().gte(1,{
+        message: "please set the price at least at 1 MATIC",
+    }),
+    paymentToken: z.string({
+        message: "please enter a valid address",
+        required_error: "paymentToken is required",
+        invalid_type_error: "paymentToken must be a string"
+    }).length(42, 
+        {
+            message: "etherum address are 42 long"
+        }),
+    
+    
+  })
+
+
+   // Form for putting on actuion NFTs
+
+  
+
+   export const auction = z.object({
+    
+    amount: z.coerce.number({
+        
+        required_error: "amount is required",
+        invalid_type_error: "amount must be a number"
+    }) 
+    .int().gte(1,{
+        message: "please enter at leat 1 share",
+    }),
+    basePrice: z.coerce.number({
+        
+        required_error: "basePrice is required",
+        invalid_type_error: "basePrice must be a number"
+    }) 
+    .int().gte(1,{
+        message: "please set the basePrice at least at 1 MATIC",
+    }),
+    minIncrement: z.coerce.number({
+        
+        required_error: "minIncrement is required",
+        invalid_type_error: "minIncrement must be a number"
+    }) 
+    .int().gte(1,{
+        message: "please set the minIncrement at least at 1 MATIC",
+    }),
+    deadline: z.date({
+        required_error: "A deadline is required.",
+      }),
+    paymentToken: z.string({
+        message: "please enter a valid address",
+        required_error: "paymentToken is required",
+        invalid_type_error: "paymentToken must be a string"
+    }).length(42, 
+        {
+            message: "etherum address are 42 long"
+        }),
+    
+    
+  })
