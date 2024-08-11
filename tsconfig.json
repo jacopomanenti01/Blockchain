@@ -24,6 +24,7 @@
     "@/lib/*": ["lib/*"], //any other root-level paths
     "@/contracts/*": ["contracts/*"],
     "@/backend/*": ["backend/*"], 
+    "@/api/*": ["api/*"], 
   }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/home/home.jsx"],

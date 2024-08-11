@@ -2,12 +2,17 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { BsImage } from "react-icons/bs";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import { MdVerified, MdTimer } from "react-icons/md";
+import { GiMicrophone } from "react-icons/gi";
+import SellButton from "@/components/NftCardV2/SellButton"
+
 
 //INTERNAL IMPORT
 import Style from "./NFTcardTwo.module.css";
+import { Button } from "../ui/button";
 
 const NFTCardTwo = ({ NFTData }) => {
+
+  //delate
   const [like, setLike] = useState(false);
   const [likeInc, setLikeInc] = useState(21);
 
@@ -21,27 +26,33 @@ const NFTCardTwo = ({ NFTData }) => {
     }
   };
 
+  //fetch image 
+  const fetchImage =  (nft) => {
+    const url_image = nft.url_image
+    if (url_image){
+      const cid = url_image.split("/").pop();
+      const url = `https://gateway.pinata.cloud/ipfs/${cid}`;
+      return url
+    }
+  };
+
   return (
     <div className={Style.NFTCardTwo}>
-      {NFTData.map((el, i) => (
+      {NFTData.map((nft, i) => (
         <div className={Style.NFTCardTwo_box} key={i + 1}>
           <div className={Style.NFTCardTwo_box_like}>
             <div className={Style.NFTCardTwo_box_like_box}>
               <div className={Style.NFTCardTwo_box_like_box_box}>
-                <BsImage className={Style.NFTCardTwo_box_like_box_box_icon} />
-                <p onClick={() => likeNFT()}>
-                  {like ? <AiOutlineHeart /> : <AiFillHeart />}
-                  {""}
-                  <span>{likeInc + 1}</span>
-                </p>
+                
               </div>
             </div>
           </div>
 
           <div className={Style.NFTCardTwo_box_img}>
+            
             <Image
-              src={el}
-              alt="NFT"
+              src={fetchImage(nft)}
+              alt={nft.title}
               width={500}
               height={500}
               objectFit="cover"
@@ -51,18 +62,19 @@ const NFTCardTwo = ({ NFTData }) => {
 
           <div className={Style.NFTCardTwo_box_info}>
             <div className={Style.NFTCardTwo_box_info_left}>
-              <p>Clone #{i + 1}</p>
+              <p>{nft.title}#{i + 1}</p>
             </div>
-            <small>4{i + 2}</small>
+            <small>{nft.shareCount}</small>
           </div>
-
+          
           <div className={Style.NFTCardTwo_box_price}>
             <div className={Style.NFTCardTwo_box_price_box}>
-              <small>Current Bid</small>
-              <p>1{i + 5}.000 ETH</p>
+              <small>Click to sell</small>
+              <SellButton/>
             </div>
+            {/** */}
             <p className={Style.NFTCardTwo_box_price_stock}>
-              <MdTimer /> <span>{i + 1} hours left</span>
+              <GiMicrophone /> <span>{nft.stageName} </span>
             </p>
           </div>
         </div>

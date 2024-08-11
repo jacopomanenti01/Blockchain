@@ -16,6 +16,7 @@
     background-color: whitesmoke;
     border-color: black;
     border-width: .1rem;
+    width: 300px; 
 }
 
 .NFTCardTwo_box:hover{
@@ -77,6 +78,11 @@
 .NFTCardTwo_box_info_left p{
     font-size: 2rem;
     font-weight: 900;
+    word-wrap: break-word; /* Ensure long words are wrapped to the next line if necessary */
+    overflow-wrap: break-word; /* Modern equivalent to handle word breaking */
+    white-space: normal; /* Allow the text to wrap */
+    line-height: 1.2; /* Adjust line height for readability */
+    
 } 
 
 .NFTCardTwo_box_price{

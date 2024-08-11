@@ -9,8 +9,11 @@ import  NFTCardTwo  from "../NftCardV2/NFTcardTwo";
 const AuthorNFTCardBox = ({
   collectiables,
   created,
-  like
+  like,
+  nftJSON
 }) => {
+
+  //
   const collectiablesArray = [
     "/images/nfts/Babycoverart.jpg",
     "/images/nfts/Babycoverart.jpg",
@@ -37,7 +40,9 @@ const AuthorNFTCardBox = ({
   return (
     <div className={Style.AuthorNFTCardBox}>
       {collectiables && <NFTCardTwo NFTData={collectiablesArray} />}
-      {created && <NFTCardTwo NFTData={createdArray} />}
+      {created && <NFTCardTwo NFTData={nftJSON} />}
+
+      {/**modify */}
       {like && <NFTCardTwo NFTData={likeArray} />}
     </div>
   );

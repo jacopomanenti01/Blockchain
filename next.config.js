@@ -10,12 +10,15 @@ const nextConfig = {
     // serverActions: {},
   },
   images: {
+    domains: ['gateway.pinata.cloud'],
+    /** 
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'i.scdn.co',
       },
     ],
+    */
   },
   reactStrictMode: true,
   webpack: (config) => {

@@ -9,32 +9,9 @@ import { NextRequest } from 'next/server';
 
 const pinata = new pinataSDK(API_KEY, API_KEY_SECRET);
 
-export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const cid = searchParams.get('cid');
-
-    if (!cid) {
-        return NextResponse.json({ error: "CID is required" }, { status: 400 });
-    }
-
-    try {
-        // URL to access the file via Pinata
-        const url = `${PINATABASEURL}${cid}`;
-
-        // HTTP request to retrieve the file
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch data from IPFS: HTTP status ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Return the JSON data
-        return NextResponse.json(data, { status: 200 });
-
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "Failed to retrieve the file from IPFS" }, { status: 500 });
-    }
+async function pinFileToIPFS() {
+    const result = await pinata.pinFileToIPFS();
+    console.log(result);
 }
+
+export default pinFileToIPFS;

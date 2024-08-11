@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 
 
 
-const AuthorProfileCard = () => {
+const AuthorProfileCard = ({setAddress, name}) => {
   const [share, setShare] = useState(false);
   const [report, setReport] = useState(false);
 
@@ -51,7 +51,7 @@ const AuthorProfileCard = () => {
         <div className={Style.AuthorProfileCard_box_info}>
             <div className={Style.AuthorProfileCard_box_info_header}>
                 <h2>
-                    Dony Herrera
+                    {name}
                     
                 </h2>
           </div>
@@ -59,7 +59,7 @@ const AuthorProfileCard = () => {
           <div className={Style.AuthorProfileCard_box_info_address}>
             <input
               type="text"
-              value="0x829BD824B03D092293333..A830"
+              value={setAddress}
               id="myInput"
             />
             <FiCopy
