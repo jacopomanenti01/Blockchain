@@ -26,6 +26,8 @@ contract NFTFactory is AccessControl, INFTFactory {
      * @param _initialFee initial fee for the record company
      */
     function deployNFT(string memory _name, address _recordCompanyAdmin, address _treasury, uint _initialFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(associatedNFT[_recordCompanyAdmin] == address(0), "Admin already has associated NFT");
+        
         NFT nft = new NFT(_name, _recordCompanyAdmin, _treasury, _initialFee);
 
         isFactoryDeployed[address(nft)] = true;
