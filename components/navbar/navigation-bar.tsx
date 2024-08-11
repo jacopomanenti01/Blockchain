@@ -87,16 +87,13 @@ import {
                         const provider = new ethers.providers.Web3Provider(window.ethereum);
                         // const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
                         const signer = provider.getSigner();
-                        const contract = new ethers.Contract("0x604D03DA814dA89671b91e4a8E9B35064ED4c5B7", FactoryAbi, signer);
+                        const contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", FactoryAbi, signer);
                         setProvider(provider);
                         setSigner(signer)
                         setContract(contract);
                         localStorage.setItem('provider', JSON.stringify(provider));
                         localStorage.setItem('signer', JSON.stringify(signer));
                         localStorage.setItem('contract', JSON.stringify(contract));
-                        console.log(provider)
-                        console.log(signer)
-                        console.log(contract);
                     } catch (error) {
                         console.error('Error fetching address:', error);
                     }
@@ -139,7 +136,6 @@ import {
         };
     
         useEffect(() => {
-          console.log("Test", address, contract)
             if (address && contract) {
                 checkIfAddressIsAdmin();
             }

@@ -5,7 +5,11 @@ import Step1 from "./step-1";
 import Step2 from "./step-2";
 import { ethers, providers, Signer } from 'ethers';
 import buildMultiStepForm from "@/lib/multi-step-form/index";
+import {abi as NFTFactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 import {abi as NFTAbi} from "@/contracts/out/NFT.sol/NFT.json"
+import { useAccount } from 'wagmi';
+
+
 
 
 //  1 - Define the full fields for the entire form
@@ -64,14 +68,18 @@ export const initialFormData: CampaignFormType = {
 	url_image: ""
 };
 
+
+
 //  4 - Define the final end step submit function
-const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
+const saveFormData: SubmitHandler<CampaignFormType> = async (values, address) => {
 	console.log("Your custom save function");
 	console.log(values);
-	
+
 	const web3prov = new providers.Web3Provider(window.ethereum)
 	const web3signer = web3prov.getSigner()
-	const web3contract = new ethers.Contract("0x243d7046ADd1354e40284e306D5268a80Cba868e", NFTAbi, web3signer)
+	const web3contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", NFTFactoryAbi, web3signer)
+	const record_address = await web3contract.associatedNFT(address);
+	const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer)	
 	let CID = ""
 
 	try {
@@ -91,7 +99,7 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 		alert("Trouble uploading file");
 	  } 
 	  try{ 
-		const tx = await web3contract.createAlbum(values.shareCount, values.singerId, `https://blush-active-cephalopod-524.mypinata.cloud/ipfs/${CID}`)
+		const tx = await record_contract.createAlbum(values.shareCount, values.singerId, `https://blush-active-cephalopod-524.mypinata.cloud/ipfs/${CID}`)
 		await tx.wait()
 		console.log(tx.hash)
     } catch (e) {
@@ -101,11 +109,12 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values) => {
 	
 };
 
+
+
 //  5 - Define the steps and sub-forms and each field for step
 export const forms: Form<CampaignFormType>[] = [
 	{ id: 1, label: "Artist", form: Step1, fields: ["stageName", "description", "genre"] },
 	{ id: 2, label: "Album", form: Step2, fields: ["title","year" , "song", "shareCount", "singerId"] },
-	//{ id: 3, label: "Página", form: Step3, fields: ["url"] },
 ];
 
 //  6 - Define initial Form Options
@@ -115,6 +124,7 @@ const initialFormOptions: UseMultiStepFormTypeOptions<CampaignFormType> = {
 	setCurrentStep: (value) => {},
 	forms,
 	saveFormData,
+	address: null,
 };
 
 // 7 - Build the Context and Provider

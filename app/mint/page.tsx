@@ -3,10 +3,12 @@ import MultiStepCampaign from "../../components/createNFT/components/multi-step-
 
 const Campaign = () => {
 	return (
-
+		<div>
+			<Navbar/>
 		<div className="flex flex-col w-full min-h-screen items-center justify-center">
-      <Navbar/>
+      
 			<MultiStepCampaign />
+		</div>
 		</div>
 	);
 };

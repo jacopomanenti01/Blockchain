@@ -13,15 +13,19 @@ import {
 	SelectTrigger,
 	SelectValue,
   } from "@/components/ui/select"
-  import { ethers, providers, Signer } from 'ethers';
 import { useCallback, useEffect, useState } from "react";
-import {abi as NFTAbi} from "@/contracts/out/NFT.sol/NFT.json"
 import { useDropzone } from "react-dropzone";
+import {abi as NFTFactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
+import {abi as NFTAbi} from "@/contracts/out/NFT.sol/NFT.json"
+import { ethers, providers, Signer } from 'ethers';
+import { useAccount } from 'wagmi';
 
 
 
 const Step2 = () => {
 	const [files, setFiles] = useState<File[]>([])
+	const { address, isConnected } = useAccount();
+
 
 	const handleUpload = async () => {
 		if (files.length) {
@@ -65,17 +69,16 @@ const Step2 = () => {
 		
 		const init = async () => {
 			try {
+			  
 			  const web3prov = new providers.Web3Provider(window.ethereum);
 			  const web3signer = web3prov.getSigner();
-			  const web3contract = new ethers.Contract(
-				"0x243d7046ADd1354e40284e306D5268a80Cba868e",
-				NFTAbi,
-				web3signer
-			  );
+			  const web3contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", NFTFactoryAbi, web3signer)
+			  const record_address = await web3contract.associatedNFT(address);
+			  const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer)
 			  
-			  const end = await web3contract.singerIdCounter();
+			  const end = await record_contract.singerIdCounter();
 			  const end_format = parseInt(end.toString(), 10);
-			  const singerArray = await web3contract.getSingers(0,end_format)	
+			  const singerArray = await record_contract.getSingers(0,end_format)	
 			  const firstElements = singerArray.map((subArray: string[])=> subArray[0]);
     		  setTotalSingers(firstElements);
 

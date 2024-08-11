@@ -15,7 +15,7 @@ import type { z } from "zod";
  */
 // biome-ignore lint: must be any as it is a any object
 function useMultiStepForm<T extends UseMultiStepFormTypeOptions<any>>(context: Context<T>) {
-	const { forms, schema, currentStep, setCurrentStep, form, saveFormData } = useContext(context);
+	const { forms, schema, currentStep, setCurrentStep, form, saveFormData, address } = useContext(context);
 	if (form === undefined) throw new Error("A react-hook-form must be defined");
 
 	const steps = forms.length;
@@ -70,7 +70,7 @@ function useMultiStepForm<T extends UseMultiStepFormTypeOptions<any>>(context: C
 	 * @param {z.infer<typeof schema>} values - The form values.
 	 */
 	const onSubmit: SubmitHandler<z.infer<typeof schema>> = async (values) => {
-		if (isLastStep) await saveFormData(values);
+		if (isLastStep) await saveFormData(values, address);
 		nextStep();
 	};
 

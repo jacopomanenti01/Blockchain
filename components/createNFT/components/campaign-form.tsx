@@ -8,12 +8,16 @@ import { useMultiStepForm } from "./multi-step-form";
 import { motion } from "framer-motion";
 import { CampaignFormContext } from "./multi-step-campaign-config";
 import { useEffect, useState } from "react";
+import {abi as NFTFactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 import {abi as NFTAbi} from "@/contracts/out/NFT.sol/NFT.json"
 import { ethers, providers, Signer } from 'ethers';
+import { useAccount } from 'wagmi';
+
 
 
 
 const CampaignForm = () => {
+	const { address, isConnected } = useAccount();
 	const { CurrentForm, currentStep, form } = useMultiStepForm(CampaignFormContext);
 	const [signer, setSigner] = useState<ethers.Signer | null>(null);
     const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
@@ -21,13 +25,20 @@ const CampaignForm = () => {
 
 
 	useEffect(()=>{
+		const init = async() =>{
 		const web3prov = new providers.Web3Provider(window.ethereum)
 		const web3signer = web3prov.getSigner()
-		const web3contract = new ethers.Contract("0x243d7046ADd1354e40284e306D5268a80Cba868e", NFTAbi, web3signer)
+		const web3contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", NFTFactoryAbi, web3signer)
+		const record_address = await web3contract.associatedNFT(address);
+		const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer)
 		setProvider(web3prov)
 		setSigner(web3signer)
-		setContract(web3contract)
-	  },[])
+		setContract(record_contract)
+		console.log(record_contract)
+	}
+	init()
+	  }
+	  ,[])
 
 
 	const handleNext = async () => {

@@ -16,6 +16,7 @@ type UseMultiStepFormTypeOptions<T extends FieldValues> = {
 	form?: UseFormReturn<T>;
 	forms: Form<T>[];
 	saveFormData: SubmitHandler<T>;
+	address: any,
 };
 
 export type { UseMultiStepFormTypeOptions, Form };
