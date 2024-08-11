@@ -55,7 +55,7 @@ function Page() {
     setLoading(true)
     const provider = new providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
-    const contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", FactoryAbi, signer);
+    const contract = new ethers.Contract(process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "", FactoryAbi, signer);
       try{
       const tx = await contract.deployNFT(data.recordName,data.recordAddress,data.recordTreasury, data.initialFee)
       await tx.wait()
