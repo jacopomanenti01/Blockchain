@@ -87,7 +87,7 @@ import {
                         const provider = new ethers.providers.Web3Provider(window.ethereum);
                         // const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
                         const signer = provider.getSigner();
-                        const contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", FactoryAbi, signer);
+                        const contract = new ethers.Contract(process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "", FactoryAbi, signer);
                         setProvider(provider);
                         setSigner(signer)
                         setContract(contract);

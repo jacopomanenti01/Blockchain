@@ -28,7 +28,7 @@ const CampaignForm = () => {
 		const init = async() =>{
 		const web3prov = new providers.Web3Provider(window.ethereum)
 		const web3signer = web3prov.getSigner()
-		const web3contract = new ethers.Contract("0xF098618BD96db59Ee34A1DE2f12A94B3dF317765", NFTFactoryAbi, web3signer)
+		const web3contract = new ethers.Contract(process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "", NFTFactoryAbi, web3signer)
 		const record_address = await web3contract.associatedNFT(address);
 		const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer)
 		setProvider(web3prov)
