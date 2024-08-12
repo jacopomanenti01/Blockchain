@@ -47,8 +47,9 @@ function SellForm() {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
-  const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
-  const {tokenID, shareCount} = useContext(TokenContext)
+  const {signer, provider, marketplace,addressRecord, contractRecord, address, handleTransactionSuccess} = useContext(Web3DataContext)
+  const {tokenID, balance} = useContext(TokenContext)
+  
 
 
 
@@ -97,6 +98,7 @@ function SellForm() {
             const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
+            handleTransactionSuccess(true)
 
           }catch(e){
             console.log(e)
@@ -107,6 +109,7 @@ function SellForm() {
             const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
+            handleTransactionSuccess(true)
           }catch(e){
             console.log(e)
           }
@@ -134,7 +137,7 @@ function SellForm() {
                     <FormItem>
                       <FormLabel>amount</FormLabel>
                       <FormDescription>
-                        You can sell up to {shareCount} NFTs available.
+                        You can sell up to {balance} NFTs available.
                       </FormDescription>
                       <FormControl>
                         <Input {...field} type="amount" placeholder='1'/>

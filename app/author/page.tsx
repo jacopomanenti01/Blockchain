@@ -31,6 +31,7 @@ type Web3Data = {
   marketplace: ethers.Contract | null,
   addressRecord: string | null,
   contractRecord: ethers.Contract | null,
+  handleTransactionSuccess: (success: boolean) => void
 }
 
 const initialFormData: Web3Data = {
@@ -39,7 +40,8 @@ const initialFormData: Web3Data = {
   provider: null,
   marketplace: null,
   addressRecord: "",
-  contractRecord: null
+  contractRecord: null,
+  handleTransactionSuccess: () => {}
 };
 
 export const Web3DataContext = React.createContext<Web3Data>(initialFormData)
@@ -61,7 +63,13 @@ function Page() {
   const [nftsUri, setNftsUri] = useState<Array<string>>([]);
   const [nftsJSON, setNftsJSON] = useState<Array<NFTData>>([]);
   const [tokenID, setTokenID] = useState<Array<number>>([]);
+  const [balance, setBalance] = useState<Array<number>>([]);
+  const [transactionSuccess, setTransactionSuccess] = useState(false)
 
+
+  const handleTransactionSuccess = (res:boolean) => {
+    setTransactionSuccess(res)
+  };
 
 
   useEffect(() => {
@@ -94,9 +102,21 @@ function Page() {
           const end = await web3contract.nextNFTId();
           const end_format = parseInt(end.toString(), 10);
           console.log("Next NFT ID:", end_format);
-          const res = await web3contract.batchGetNFTs(address, 0, end_format, 10);
+          const res = await web3contract.batchGetNFTs(address, 0, 1, 10);
           console.log(res)
 
+          // Get Balance
+          setBalance((prevTokenID) => {
+            const newTokenID = res[2]
+              .map((bn: any) => parseInt(bn.toString(), 10)) // Convert BigNumbers to integers
+          
+            // Combine and ensure uniqueness using a Set
+            return [...prevTokenID, ...newTokenID];
+          });
+
+
+
+            
           // Spread tokens' id
           setTokenID((prevTokenID) => {
             const newTokenID = res[1]
@@ -124,7 +144,7 @@ function Page() {
     };
 
     init();
-  }, [isConnected]);
+  }, [isConnected,transactionSuccess]);
 
 
   // useEffect to handle the updated nftsUri state
@@ -139,6 +159,7 @@ function Page() {
           
           // Add tokenID to the data object
           data.tokenID = tokenID[i];
+          data.balance= balance[i]
 
           setNftsJSON((prevdata) => {
             return uniqueById([...prevdata, data]);
@@ -201,7 +222,7 @@ function Page() {
         setFollowing={setFollowing}
         
       />
-      <Web3DataContext.Provider value = {{signer, provider, marketplace, addressRecord, contractRecord, address}}>
+      <Web3DataContext.Provider value = {{signer, provider, marketplace, addressRecord, contractRecord, address, handleTransactionSuccess}}>
       <AuthorNFTCardBox
         collectiables={collectiables}
         created={created}

@@ -13,12 +13,14 @@ import { Button } from "../ui/button";
 
 interface FormContext {
   tokenID: number
-  shareCount: number
+  balance: number
+
 }
 
 const initialFormData: FormContext = {
   tokenID: 0,
-  shareCount: 0
+  balance: 0,
+
 };
 
 export const TokenContext = React.createContext<FormContext>(initialFormData)
@@ -34,6 +36,7 @@ interface NFT {
   url_image: string
   year: number
   tokenID: number
+  balance:number
   };
 
 interface NFTCardTwoProps {
@@ -47,6 +50,7 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
   //delate
   const [like, setLike] = useState(false);
   const [likeInc, setLikeInc] = useState(21);
+  const [transactionSuccess, setTransactionSuccess] = useState(false)
 
   const likeNFT = () => {
     if (!like) {
@@ -68,6 +72,7 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
     }
     return "/path/to/default/image.jpg"; // Fallback image
   };
+
 
   return (
     <div className={Style.NFTCardTwo}>
@@ -97,13 +102,13 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
             <div className={Style.NFTCardTwo_box_info_left}>
               <p>{nft.title}#{i + 1}</p>
             </div>
-            <small>{nft.shareCount}</small>
+            <small>{nft.balance}</small>
           </div>
           
           <div className={Style.NFTCardTwo_box_price}>
             <div className={Style.NFTCardTwo_box_price_box}>
               <small>Click to sell</small>
-              <TokenContext.Provider value = {{ tokenID: nft.tokenID, shareCount: nft.shareCount }}>
+              <TokenContext.Provider value = {{ tokenID: nft.tokenID, balance: nft.balance}}>
 
               <SellButton/>
               </TokenContext.Provider>
