@@ -62,13 +62,14 @@ contract NFTFactory is AccessControl, INFTFactory {
      * @param _start starting NFT index (inclusive)
      * @param _end ending NFT index (exclusive)
      * @param _limit max amount of items to collect
-     * @dev return four arrays (containgin respectively: nft address, token id, amount owned and relative uri) and the effective number of NFTs
+     * @dev return four arrays (containgin respectively: nft address, token id, amount owned, relative uri and relative balance) and the effective number of NFTs
      */
-    function batchGetNFTs(address _owner, uint _start, uint _end, uint _limit) external view returns (address[] memory, uint[] memory, uint[] memory, string[] memory, uint) {
+    function batchGetNFTs(address _owner, uint _start, uint _end, uint _limit) external view returns (address[] memory, uint[] memory, uint[] memory, string[] memory, uint[] memory, uint) {
         address[] memory nfts = new address[](_limit);
         uint[] memory tokenIds = new uint[](_limit);
         uint[] memory amounts = new uint[](_limit);
         string[] memory uris = new string[](_limit);
+        uint[] memory balances = new uint[](_limit);
 
         uint globalId = 0;
         for (uint i = _start; i < _end && globalId < _limit; i++) {
@@ -81,13 +82,14 @@ contract NFTFactory is AccessControl, INFTFactory {
                     tokenIds[globalId] = j;
                     amounts[globalId] = balance;
                     uris[globalId] = nft.uri(j);
+                    balances[globalId] = balance;
 
                     globalId++;
                 }
             }
         }
 
-        return (nfts, tokenIds, amounts, uris, globalId);
+        return (nfts, tokenIds, amounts, uris, balances, globalId);
     }
 
 }

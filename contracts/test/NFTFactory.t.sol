@@ -81,13 +81,14 @@ contract NFTFactoryTest is Test {
         vm.stopPrank();
 
         // Get all owner NFTs
-        (address[] memory nfts, uint[] memory ids, uint[] memory amounts, string[] memory uris, uint effSize) = factory.batchGetNFTs(newOwner, 0, factory.nextNFTId(), 20);
+        (address[] memory nfts, uint[] memory ids, uint[] memory amounts, string[] memory uris, uint[] memory balances, uint effSize) = factory.batchGetNFTs(newOwner, 0, factory.nextNFTId(), 20);
 
         // Checks
         assertEq(nfts.length, ids.length, "Incorrect length between nfts and ids");
         assertEq(ids.length, amounts.length, "Incorrect length between ids and amounts");
         assertEq(amounts.length, uris.length, "Incorrect length between amounts and uris");
-        assertEq(uris.length, 20, "Incorrect arrays length");
+        assertEq(uris.length, balances.length, "Incorrect length between uris and balances");
+        assertEq(balances.length, 20, "Incorrect arrays length");
         assertEq(effSize, 6, "Incorrect effective size");
 
         // Individual checks - NFT addresses
@@ -121,6 +122,14 @@ contract NFTFactoryTest is Test {
         assertEq(uris[3], "https://.../d", "Incorrect uri at id 3");
         assertEq(uris[4], "https://.../e", "Incorrect uri at id 4");
         assertEq(uris[5], "https://.../f", "Incorrect uri at id 5");
+
+        // Individual checks - balances
+        assertEq(balances[0], amount1, "Incorrect balance at id 0");
+        assertEq(balances[1], amount2, "Incorrect balance at id 1");
+        assertEq(balances[2], amount3, "Incorrect balance at id 2");
+        assertEq(balances[3], amount1, "Incorrect balance at id 3");
+        assertEq(balances[4], amount1, "Incorrect balance at id 4");
+        assertEq(balances[5], amount2, "Incorrect balance at id 5");
 
     }
 
