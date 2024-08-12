@@ -10,7 +10,39 @@ import SellButton from "@/components/NftCardV2/SellButton"
 import Style from "./NFTcardTwo.module.css";
 import { Button } from "../ui/button";
 
-const NFTCardTwo = ({ NFTData }) => {
+
+interface FormContext {
+  tokenID: number
+  shareCount: number
+}
+
+const initialFormData: FormContext = {
+  tokenID: 0,
+  shareCount: 0
+};
+
+export const TokenContext = React.createContext<FormContext>(initialFormData)
+
+interface NFT {
+  address: string
+  genre: string
+  shareCount: number
+  singerId: number
+  song: Array<string>
+  stageName: string
+  title: string
+  url_image: string
+  year: number
+  tokenID: number
+  };
+
+interface NFTCardTwoProps {
+  NFTData: Array<NFT>; // Use the NFT type here
+}
+
+
+
+const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
 
   //delate
   const [like, setLike] = useState(false);
@@ -27,18 +59,19 @@ const NFTCardTwo = ({ NFTData }) => {
   };
 
   //fetch image 
-  const fetchImage =  (nft) => {
-    const url_image = nft.url_image
-    if (url_image){
+  const fetchImage = (nft: any): string => {
+    const url_image = nft.url_image;
+    if (url_image) {
       const cid = url_image.split("/").pop();
       const url = `https://gateway.pinata.cloud/ipfs/${cid}`;
-      return url
+      return url;
     }
+    return "/path/to/default/image.jpg"; // Fallback image
   };
 
   return (
     <div className={Style.NFTCardTwo}>
-      {NFTData.map((nft, i) => (
+      {NFTData.map((nft, i):any => (
         <div className={Style.NFTCardTwo_box} key={i + 1}>
           <div className={Style.NFTCardTwo_box_like}>
             <div className={Style.NFTCardTwo_box_like_box}>
@@ -70,7 +103,10 @@ const NFTCardTwo = ({ NFTData }) => {
           <div className={Style.NFTCardTwo_box_price}>
             <div className={Style.NFTCardTwo_box_price_box}>
               <small>Click to sell</small>
+              <TokenContext.Provider value = {{ tokenID: nft.tokenID, shareCount: nft.shareCount }}>
+
               <SellButton/>
+              </TokenContext.Provider>
             </div>
             {/** */}
             <p className={Style.NFTCardTwo_box_price_stock}>

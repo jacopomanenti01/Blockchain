@@ -25,8 +25,9 @@
     "@/contracts/*": ["contracts/*"],
     "@/backend/*": ["backend/*"], 
     "@/api/*": ["api/*"], 
+    "@/app/*": ["app/*"], 
   }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/home/home.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/home/home.jsx", "components/NftCardV2/NFTcardTwo.jsx"],
   "exclude": ["node_modules"]
 }

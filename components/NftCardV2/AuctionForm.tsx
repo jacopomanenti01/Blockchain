@@ -39,10 +39,7 @@ import {z} from "zod"
 
 import {auction} from "@/backend/schema/deploy"
 import {Context} from "./SellButton"
-
-
-
-
+import {Web3DataContext} from "@/app/author/page"
 
 
 
@@ -51,6 +48,7 @@ function AuctionForm() {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
+  const {signer, provider, marketplace} = useContext(Web3DataContext)
 
 
 

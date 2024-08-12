@@ -9,6 +9,8 @@ import { useAccount } from 'wagmi';
 import { ethers, providers, Signer } from 'ethers';
 import { abi as NFTFactoryAbi } from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
+import { abi as NFTMarketplace } from "@/contracts/out/Marketplace.sol/Marketplace.json"
+
 
 type NFTData = {
 address: string
@@ -22,6 +24,26 @@ url_image: string
 year: number
 };
 
+type Web3Data = {
+  address: string |null |undefined,
+  signer : ethers.Signer | null,
+  provider: ethers.providers.Web3Provider | null,
+  marketplace: ethers.Contract | null,
+  addressRecord: string | null,
+  contractRecord: ethers.Contract | null,
+}
+
+const initialFormData: Web3Data = {
+  address: null,
+  signer : null,
+  provider: null,
+  marketplace: null,
+  addressRecord: "",
+  contractRecord: null
+};
+
+export const Web3DataContext = React.createContext<Web3Data>(initialFormData)
+
 function Page() {
   const { address, isConnected } = useAccount();
   const [collectiables, setCollectiables] = useState(true);
@@ -29,7 +51,7 @@ function Page() {
   const [like, setLike] = useState(false);
   const [follower, setFollower] = useState(false);
   const [following, setFollowing] = useState(false);
-
+  const [marketplace, setMarketplace] = useState<ethers.Contract | null>(null);
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [factory, setFactory] = useState<ethers.Contract | null>(null);
@@ -38,6 +60,8 @@ function Page() {
   const [name, setName] = useState<string | null>("");
   const [nftsUri, setNftsUri] = useState<Array<string>>([]);
   const [nftsJSON, setNftsJSON] = useState<Array<NFTData>>([]);
+  const [tokenID, setTokenID] = useState<Array<number>>([]);
+
 
 
   useEffect(() => {
@@ -47,10 +71,11 @@ function Page() {
           const web3prov = new providers.Web3Provider(window.ethereum);
           const web3signer = web3prov.getSigner();
           const web3contract = new ethers.Contract(
-            "0xF098618BD96db59Ee34A1DE2f12A94B3dF317765",
+            process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "",
             NFTFactoryAbi,
             web3signer
           );
+          const marketpalce_contract = new ethers.Contract(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS || "", NFTMarketplace, web3signer);
           const record_address = await web3contract.associatedNFT(address);
           const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer);
 
@@ -59,8 +84,7 @@ function Page() {
           setFactory(web3contract);
           setcontractRecord(record_contract);
           setaddressRecord(record_address);
-
-          console.log("Contract initialized:", web3contract);
+          setMarketplace(marketpalce_contract);
 
           // Get name 
           const name = await record_contract.name();
@@ -72,6 +96,18 @@ function Page() {
           console.log("Next NFT ID:", end_format);
           const res = await web3contract.batchGetNFTs(address, 0, end_format, 10);
           console.log(res)
+
+          // Spread tokens' id
+          setTokenID((prevTokenID) => {
+            const newTokenID = res[1]
+              .map((bn: any) => parseInt(bn.toString(), 10)) // Convert BigNumbers to integers
+              .filter((token: number) => !prevTokenID.includes(token)); // Filter out existing tokens
+          
+            // Combine and ensure uniqueness using a Set
+            return Array.from(new Set([...prevTokenID, ...newTokenID]));
+          });
+
+
 
           // Spread the elements of res into the nfts state
           setNftsUri((prevNfts) => {
@@ -90,34 +126,36 @@ function Page() {
     init();
   }, [isConnected]);
 
+
   // useEffect to handle the updated nftsUri state
   useEffect(() => {
     const fetchDataFromIPFS = async () => {
-      // get cid for each nft
-      for (const nftUri of nftsUri) {
+      for (let i = 0; i < nftsUri.length; i++) {
+        const nftUri = nftsUri[i];
         const cid = nftUri.split("/").pop();
-        console.log(cid);
+
         if (cid) {
-          // return json for each nft
           const data = await fetchFromIPFS(cid);
-          setNftsJSON((prevdata) =>  {
-            return uniqueById([...prevdata, data])})
           
+          // Add tokenID to the data object
+          data.tokenID = tokenID[i];
+
+          setNftsJSON((prevdata) => {
+            return uniqueById([...prevdata, data]);
+          });
         }
       }
     };
 
-    if (nftsUri.length > 0) {
+    if (nftsUri.length > 0 && tokenID.length >0) {
       fetchDataFromIPFS();
+      
     }
-  }, [nftsUri]);
+  }, [nftsUri, tokenID]);
+
+  useEffect(()=>{console.log(nftsJSON)},[nftsJSON])
 
 
-  //test
-  useEffect(()=>{
-      console.log(nftsJSON[0])
-  
-  },[nftsJSON])
 
   // prevent json duplicates 
   function uniqueById(items:any) {
@@ -163,12 +201,14 @@ function Page() {
         setFollowing={setFollowing}
         
       />
+      <Web3DataContext.Provider value = {{signer, provider, marketplace, addressRecord, contractRecord, address}}>
       <AuthorNFTCardBox
         collectiables={collectiables}
         created={created}
         like={like}
         nftJSON={nftsJSON}
       />
+      </Web3DataContext.Provider>
     </div>
   );
 }
