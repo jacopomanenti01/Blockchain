@@ -26,6 +26,7 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {z} from "zod"
+import { useRouter } from "next/navigation";
 
 
 import {sell} from "@/backend/schema/deploy"
@@ -43,12 +44,15 @@ import { ethers} from 'ethers';
 
 
 
+
 function SellForm() {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
   const {signer, provider, marketplace,addressRecord, contractRecord, address, handleTransactionSuccess} = useContext(Web3DataContext)
   const {tokenID, balance} = useContext(TokenContext)
+  const router = useRouter();
+
   
 
 
@@ -99,6 +103,8 @@ function SellForm() {
             await tx.wait()
             console.log(tx.hash)
             handleTransactionSuccess(true)
+            router.refresh();
+
 
           }catch(e){
             console.log(e)
@@ -110,6 +116,8 @@ function SellForm() {
             await tx.wait()
             console.log(tx.hash)
             handleTransactionSuccess(true)
+            router.refresh();
+
           }catch(e){
             console.log(e)
           }

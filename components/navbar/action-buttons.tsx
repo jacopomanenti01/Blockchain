@@ -73,7 +73,7 @@ const ActionButtons = () => {
                 <ConnectButton/>
                 </div>
                 
-                <Link href="/mint">
+                <Link href="/author">
                 <Button
                 className="text-md bg-blue-500">
                     <CgProfile className="text-3xl" />

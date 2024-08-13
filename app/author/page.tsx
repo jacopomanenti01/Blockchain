@@ -98,12 +98,24 @@ function Page() {
           const name = await record_contract.name();
           setName(name);
 
-          // Get NFTs
+          // Get owned NFTs
           const end = await web3contract.nextNFTId();
           const end_format = parseInt(end.toString(), 10);
-          console.log("Next NFT ID:", end_format);
-          const res = await web3contract.batchGetNFTs(address, 0, 1, 10);
-          console.log(res)
+          const res = await web3contract.batchGetNFTs(address, 0, end_format, 10);
+          console.log("this is the res", res)
+          console.log("this is record address", record_address)
+
+          // Get sold NFTs
+          const numberOrders = await marketpalce_contract.orderCounter()
+          const numberOrders_format = parseInt(numberOrders.toString(), 10);
+          console.log("Number of orders:", numberOrders_format);
+          const orders = await marketpalce_contract.getOrders(0, numberOrders_format, address);
+          console.log(orders)
+
+
+
+
+
 
           // Get Balance
           setBalance((prevTokenID) => {
@@ -113,6 +125,10 @@ function Page() {
             // Combine and ensure uniqueness using a Set
             return [...prevTokenID, ...newTokenID];
           });
+
+
+          // Get orders
+
 
 
 
@@ -144,7 +160,7 @@ function Page() {
     };
 
     init();
-  }, [isConnected,transactionSuccess]);
+  }, [isConnected]);
 
 
   // useEffect to handle the updated nftsUri state

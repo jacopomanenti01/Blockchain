@@ -34,12 +34,18 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {z} from "zod"
+import { useRouter } from "next/navigation";
+
 
 
 
 import {auction} from "@/backend/schema/deploy"
 import {Context} from "./SellButton"
+import {TokenContext} from "./NFTcardTwo"
 import {Web3DataContext} from "@/app/author/page"
+import { abi as GenericERC20  } from "@/contracts/out/GenericERC20.sol/GenericERC20.json";
+import { ethers} from 'ethers';
+
 
 
 
@@ -48,7 +54,10 @@ function AuctionForm() {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
-  const {signer, provider, marketplace} = useContext(Web3DataContext)
+  const {signer, provider, marketplace,addressRecord, contractRecord, address, handleTransactionSuccess} = useContext(Web3DataContext)
+  const {tokenID, balance} = useContext(TokenContext)
+  const router = useRouter();
+  
 
 
 
@@ -56,8 +65,8 @@ function AuctionForm() {
     resolver: zodResolver(auction),
     defaultValues:{
 
-        amount:0,
-        basePrice:0,
+      amount:0,
+      basePrice:0,
       paymentToken:"",
       minIncrement:0,
       deadline: new Date("2999-01-01T00:00:00Z")
@@ -72,16 +81,70 @@ function AuctionForm() {
     setLoading(true)
     setOpen(false)
     console.log(data)
-    toast({
-        title: "You submitted the following values:",
-        description: (
-          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-            <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-          </pre>
-        ),
-      })
-    
+
+    //format date time in unix timestamp
+    const selectedDate = new Date(data.deadline);
+    const deadline = Math.floor(selectedDate.getTime() / 1000);
+    console.log(deadline)
+
+
+    // format the price depending on which token the user selects
+    let price_format;
+    let minIncrement_format;
+    if(data.paymentToken == process.env.NEXT_PUBLIC_MATIC_ADDRESS ){
+      price_format = ethers.utils.parseUnits(data.basePrice.toString(), 18).toString();
+      minIncrement_format = ethers.utils.parseUnits(data.minIncrement.toString(), 18).toString();
+      console.log(minIncrement_format)
+      console.log(price_format)
+ 
+    }else{
+      if(signer){
+      const ERC20 = new ethers.Contract(process.env.NEXT_PUBLIC_ERC20_ADDRESS || "", GenericERC20, signer);
+      const decimals = await ERC20.decimals()
+      price_format = ethers.utils.parseUnits(data.basePrice.toString(), decimals).toString();
+      minIncrement_format = ethers.utils.parseUnits(data.minIncrement.toString(), decimals).toString();
+      console.log(minIncrement_format)
+      console.log(price_format)
+      }
     }
+
+    let res;
+    if(contractRecord && address && marketplace){
+      
+      res = await contractRecord.isApprovedForAll(address, process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS ||"");
+      console.log(res)
+        if(!res){
+          const tx = await contractRecord.setApprovalForAll(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS, true);
+          await tx.wait()
+          console.log(tx.hash)
+
+          try{
+            const tx = await marketplace.createAuction(addressRecord,tokenID, data.amount, price_format,minIncrement_format, deadline,data.paymentToken  )
+            await tx.wait()
+            console.log(tx.hash)
+            handleTransactionSuccess(true)
+            router.refresh();
+
+          }catch(e){
+            console.log(e)
+          }
+
+        }else{
+          try{
+            const tx = await marketplace.createAuction(addressRecord,tokenID, data.amount, price_format, minIncrement_format,deadline, data.paymentToken  )
+            await tx.wait()
+            console.log(tx.hash)
+            handleTransactionSuccess(true)
+            router.refresh();
+          }catch(e){
+            console.log(e)
+          }
+        }
+    } else{
+      alert("please log to metamask")
+    }
+
+  }
   
 
 
@@ -100,6 +163,9 @@ function AuctionForm() {
                 render={({field})=>(
                     <FormItem>
                       <FormLabel>amount</FormLabel>
+                      <FormDescription>
+                        You can sell up to {balance} NFTs available.
+                      </FormDescription>
                       <FormControl>
                         <Input {...field} type="amount" placeholder='1'/>
                       </FormControl>
@@ -124,20 +190,29 @@ function AuctionForm() {
                 
                 />  
                 <FormField
-
-                control={form.control}
-                name="paymentToken"
-                render={({field})=>(
+                  control={form.control}
+                  name="paymentToken"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>paymentToken</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="paymentToken" placeholder='0x'/>
-                      </FormControl>
+                      <FormLabel>Select Token</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a Token" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0x0000000000000000000000000000000000000000">MATIC</SelectItem>
+                          <SelectItem value="0x565Dc655Ab6729034116c214BF49862cF41aD7dB">Soldi del Monopoli</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        In order to send the transaction, select on of the available tokens.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
-                )}
-                
-                />  
+                  )}
+        />
                 <FormField
 
                 control={form.control}
