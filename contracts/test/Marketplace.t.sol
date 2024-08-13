@@ -563,10 +563,11 @@ contract MarketplaceTest is Test {
 
         // (address[] memory payTs, uint[] memory prices, uint[] memory amounts, uint[] memory lefts,  
         //     uint[] memory ids, address[] memory effSellers, address[] memory collections) = marketplace.getOrders(0, 2, address(0));
-        (Marketplace.Order[] memory orders, uint effSize) = marketplace.getOrders(0, 2, address(0));
+        (Marketplace.Order[] memory orders, string[] memory uris, uint effSize) = marketplace.getOrders(0, 2, address(0));
 
         // Checks
         assertEq(effSize, 2, "Incorrect length");
+        assertEq(uris.length, 2, "Incorrect uris length");
 
         assertEq(orders[0].paymentToken, address(0), "Incorrect payment token at id 0");
         assertEq(orders[0].price, 2 * 1e18, "Incorrect price at id 0");
@@ -575,6 +576,7 @@ contract MarketplaceTest is Test {
         assertEq(orders[0].tokenId, 0, "Incorrect token id at id 0");
         assertEq(orders[0].owner, seller, "Incorrect owner at id 0");
         assertEq(orders[0].collection, address(nft), "Incorrect collecton at id 0");
+        assertEq(uris[0], "https://.../artist/sid/albums/aid", "Incorrect uri at id 0");
 
         assertEq(orders[1].paymentToken, address(paymentToken), "Incorrect payment token at id 1");
         assertEq(orders[1].price, 1.5 * 1e18, "Incorrect price at id 1");
@@ -583,6 +585,7 @@ contract MarketplaceTest is Test {
         assertEq(orders[1].tokenId, 0, "Incorrect token id at id 1");
         assertEq(orders[1].owner, seller2, "Incorrect owner at id 1");
         assertEq(orders[1].collection, address(nft), "Incorrect collecton at id 1");
+        assertEq(uris[1], "https://.../artist/sid/albums/aid", "Incorrect uri at id 1");
     }
 
     function test_OrdersGetterWithOwner() public {
@@ -597,7 +600,7 @@ contract MarketplaceTest is Test {
         marketplace.createOrder(address(nft), 0, 10, 1.5 * 1e18, address(paymentToken));
         vm.stopPrank();
 
-        (Marketplace.Order[] memory orders, uint effSize) = marketplace.getOrders(0, 2, seller2);
+        (Marketplace.Order[] memory orders, , uint effSize) = marketplace.getOrders(0, 2, seller2);
 
         // Checks
         assertEq(effSize, 1, "Incorrect length");
@@ -637,7 +640,7 @@ contract MarketplaceTest is Test {
         marketplace.bid{value: 1.5 * 1e18}(1, 0);
         vm.stopPrank();
 
-        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(0), address(0));
+        (Marketplace.Auction[] memory auctions, string[] memory uris, uint effSize) = marketplace.getAuctions(0, 2, address(0), address(0));
 
         // Checks
         assertEq(effSize, 2, "Incorrect length");
@@ -652,6 +655,7 @@ contract MarketplaceTest is Test {
         assertEq(auctions[0].tokenId, 0, "Incorrect token id at id 0");
         assertEq(auctions[0].owner, seller, "Incorrect owner at id 0");
         assertEq(auctions[0].collection, address(nft), "Incorrect collecton at id 0");
+        assertEq(uris[0], "https://.../artist/sid/albums/aid", "Incorrect uri at id 0");
 
         assertEq(auctions[1].paymentToken, address(0), "Incorrect payment token at id 1");
         assertEq(auctions[1].amount, 15, "Incorrect amount at id 1");
@@ -663,6 +667,7 @@ contract MarketplaceTest is Test {
         assertEq(auctions[1].tokenId, 0, "Incorrect token id at id 1");
         assertEq(auctions[1].owner, seller2, "Incorrect owner at id 1");
         assertEq(auctions[1].collection, address(nft), "Incorrect collecton at id 1");
+        assertEq(uris[1], "https://.../artist/sid/albums/aid", "Incorrect uri at id 1");
     }
 
     function test_AuctionsGetterNoOwnerWithBidder() public {
@@ -682,7 +687,7 @@ contract MarketplaceTest is Test {
         marketplace.bid{value: 1.5 * 1e18}(1, 0);
         vm.stopPrank();
 
-        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(0), address(bidder1));
+        (Marketplace.Auction[] memory auctions, , uint effSize) = marketplace.getAuctions(0, 2, address(0), address(bidder1));
 
         // Checks
         assertEq(effSize, 1, "Incorrect length");
@@ -711,7 +716,7 @@ contract MarketplaceTest is Test {
         marketplace.createAuction(address(nft), 0, 15, 1.1 * 1e18, 0.1 * 1e18, block.timestamp + 3600, address(0));
         vm.stopPrank();
 
-        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(seller), address(0));
+        (Marketplace.Auction[] memory auctions, , uint effSize) = marketplace.getAuctions(0, 2, address(seller), address(0));
 
         // Checks
         assertEq(effSize, 1, "Incorrect length");
@@ -746,11 +751,11 @@ contract MarketplaceTest is Test {
         vm.stopPrank();
 
         // Empty case check
-        (Marketplace.Auction[] memory auctions, uint effSize) = marketplace.getAuctions(0, 2, address(seller), address(bidder1));
+        (Marketplace.Auction[] memory auctions, , uint effSize) = marketplace.getAuctions(0, 2, address(seller), address(bidder1));
         assertEq(effSize, 0, "Incorrect length");
 
         // Check
-        (auctions, effSize) = marketplace.getAuctions(0, 2, address(seller2), address(bidder1));
+        (auctions, , effSize) = marketplace.getAuctions(0, 2, address(seller2), address(bidder1));
         assertEq(effSize, 1, "Incorrect length");
 
         assertEq(auctions[0].paymentToken, address(0), "Incorrect payment token at id 0");

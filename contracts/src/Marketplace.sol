@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import "openzeppelin-contracts/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
@@ -114,7 +114,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         require(_amount > 0, "Amount must be greater than 0");
         require(nftFactory.isFactoryDeployed(_collection), "Invalid collection");
 
-        IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
+        IERC1155MetadataURI(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
         Order storage  order = orders[orderCounter];
         order.paymentToken = _paymentToken;
@@ -154,7 +154,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         require(_deadline > block.timestamp, "Deadline must be in the future");
         require(nftFactory.isFactoryDeployed(_collection), "Invalid collection");
 
-        IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
+        IERC1155MetadataURI(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
         Auction storage auction = auctions[auctionCounter];
         auction.paymentToken = _paymentToken;
@@ -241,10 +241,10 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
                 IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
             }
 
-            IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.tokenId, auction.amount, "");
+            IERC1155MetadataURI(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.tokenId, auction.amount, "");
         } else {
             // Auction failed case -> return tokens to the owner
-            IERC1155(auction.collection).safeTransferFrom(address(this), auction.owner, auction.tokenId, auction.amount, "");
+            IERC1155MetadataURI(auction.collection).safeTransferFrom(address(this), auction.owner, auction.tokenId, auction.amount, "");
         }
         
         emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
@@ -280,7 +280,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
             IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
         }
 
-        IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
+        IERC1155MetadataURI(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
         order.left -= _buyAmount;
 
         emit OrderFilled(_orderId, msg.sender, _buyAmount);
@@ -296,7 +296,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         Order storage order = orders[_id];
         require(order.owner == msg.sender, "Not token owner");
 
-        IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
+        IERC1155MetadataURI(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
 
         order.left = 0;
 
@@ -309,22 +309,24 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _end ending index (exclusive)
      * @param _owner eventual filter of the orders. If it is equal to address(0), returns all orders
      */
-    function getOrders(uint _start, uint _end, address _owner) external view returns (Order[] memory, uint) {
+    function getOrders(uint _start, uint _end, address _owner) external view returns (Order[] memory, string[] memory, uint) {
         require(_end <= orderCounter, "Invalid end");
         require (_start < _end, "Start must be smaller than end");
 
         uint effIdx = 0;
         Order[] memory array = new Order[](_end - _start);
+        string[] memory uris = new string[](_end - _start);
         
         for (uint i = _start; i < _end; i++) {
             Order memory order = orders[i];
             if (_owner == address(0) || order.owner == _owner) {
                 array[effIdx] = order;
+                uris[effIdx] = IERC1155MetadataURI(order.collection).uri(order.tokenId);
                 effIdx++;
             }
         }
 
-        return (array, effIdx);
+        return (array, uris, effIdx);
     }
 
     /**
@@ -334,22 +336,24 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _owner eventual filter of the auction. If it is equal to address(0), ignores the owner
      * @param _bidder eventual filter of the auction. If it is equal to address(0), ignores the highestBidder
      */
-    function getAuctions(uint _start, uint _end, address _owner, address _bidder) external view returns (Auction[] memory, uint) {
+    function getAuctions(uint _start, uint _end, address _owner, address _bidder) external view returns (Auction[] memory, string[] memory, uint) {
         require(_end <= auctionCounter, "Invalid end");
         require (_start < _end, "Start must be smaller than end");
 
         uint effIdx = 0;
         Auction[] memory array = new Auction[](_end - _start);
+        string[] memory uris = new string[](_end - _start);
         
         for (uint i = _start; i < _end; i++) {
             Auction memory auction = auctions[i];
             if ((_owner == address(0) || auction.owner == _owner) && (_bidder == address(0) || _bidder == auction.highestBidder)) {
                 array[effIdx] = auction;
+                uris[effIdx] = IERC1155MetadataURI(auction.collection).uri(auction.tokenId);
                 effIdx++;
             }
         }
 
-        return (array, effIdx);
+        return (array, uris, effIdx);
     }
 
     // Internal function to process ETH payments
