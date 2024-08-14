@@ -5,7 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {NFTFactory} from "../src/NFTFactory.sol";
 import {Marketplace} from "../src/Marketplace.sol";
 
-contract DeployerOnlyMarketlaceScript is Script {
+contract DeployerOnlyMarketplaceScript is Script {
     Marketplace public marketplace;
 
     function setUp() public {}
