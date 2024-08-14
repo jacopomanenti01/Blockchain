@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -9,63 +9,115 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination"
+import { useAccount } from "wagmi"
+import { abi as NFTMarketplace } from "@/contracts/out/Marketplace.sol/Marketplace.json"
+import { ethers, providers, Signer } from 'ethers';
+import { formatEther } from "viem"
 
 export default function Component() {
-  const nftData = [
-    {
-      id: 1,
-      image: "./images/icon-fast.png",
-      title: "Cosmic Odyssey",
-      description: "Explore the depths of the universe with this captivating NFT.",
-      creator: "Galactic Artistry",
-      price: 1.2,
-    },
-    {
-      id: 2,
-      image: "./images/icon-fast.png",
-      title: "Ethereal Bloom",
-      description: "Witness the beauty of nature in digital form.",
-      creator: "Pixel Botanica",
-      price: 0.8,
-    },
-    {
-      id: 3,
-      image: "./images/icon-fast.png",
-      title: "Cyberpunk Dystopia",
-      description: "Dive into a futuristic world of neon and technology.",
-      creator: "Neon Architects",
-      price: 2.5,
-    },
-    {
-      id: 4,
-      image: "./images/icon-fast.png",
-      title: "Dreamscape Reverie",
-      description: "Escape to a realm of imagination and wonder.",
-      creator: "Surreal Visionaries",
-      price: 1.7,
-    },
-    {
-      id: 5,
-      image: "./images/icon-fast.png",
-      title: "Quantum Kaleidoscope",
-      description: "Explore the mesmerizing patterns of the digital world.",
-      creator: "Pixel Alchemists",
-      price: 1.1,
-    },
-    {
-      id: 6,
-      image: "./images/icon-fast.png",
-      title: "Mythical Menagerie",
-      description: "Discover the fantastical creatures of the digital realm.",
-      creator: "Pixel Beastmasters",
-      price: 0.9,
-    },
-  ]
+  // const nftData = [
+  //   {
+  //     id: 1,
+  //     image: "./images/icon-fast.png",
+  //     title: "Cosmic Odyssey",
+  //     description: "Explore the depths of the universe with this captivating NFT.",
+  //     creator: "Galactic Artistry",
+  //     price: 1.2,
+  //   },
+  //   {
+  //     id: 2,
+  //     image: "./images/icon-fast.png",
+  //     title: "Ethereal Bloom",
+  //     description: "Witness the beauty of nature in digital form.",
+  //     creator: "Pixel Botanica",
+  //     price: 0.8,
+  //   },
+  //   {
+  //     id: 3,
+  //     image: "./images/icon-fast.png",
+  //     title: "Cyberpunk Dystopia",
+  //     description: "Dive into a futuristic world of neon and technology.",
+  //     creator: "Neon Architects",
+  //     price: 2.5,
+  //   },
+  //   {
+  //     id: 4,
+  //     image: "./images/icon-fast.png",
+  //     title: "Dreamscape Reverie",
+  //     description: "Escape to a realm of imagination and wonder.",
+  //     creator: "Surreal Visionaries",
+  //     price: 1.7,
+  //   },
+  //   {
+  //     id: 5,
+  //     image: "./images/icon-fast.png",
+  //     title: "Quantum Kaleidoscope",
+  //     description: "Explore the mesmerizing patterns of the digital world.",
+  //     creator: "Pixel Alchemists",
+  //     price: 1.1,
+  //   },
+  //   {
+  //     id: 6,
+  //     image: "./images/icon-fast.png",
+  //     title: "Mythical Menagerie",
+  //     description: "Discover the fantastical creatures of the digital realm.",
+  //     creator: "Pixel Beastmasters",
+  //     price: 0.9,
+  //   },
+  // ]
+
+
+  const [nftData, setNftData] = useState([]);
+  const { account, isConnected } = useAccount();
   const [sortBy, setSortBy] = useState("newest")
   const [filterBy, setFilterBy] = useState({
     creator: [],
     price: { min: 0, max: 10 },
   })
+
+  useEffect(() => {
+    async function getNFTs() {
+      const web3prov = new providers.Web3Provider(window.ethereum);
+      const web3signer = web3prov.getSigner();
+      const marketplace = new ethers.Contract(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS || "", NFTMarketplace, web3signer);
+      const end = await  marketplace.orderCounter();
+      const [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
+      
+      const data = [];
+      for (let i = 0; i < size; i++) {
+        const metadata = await fetchMetadata(uris[i]);
+
+        console.log(metadata);
+
+        data.push({
+          id: i,
+          image: metadata.url_image,
+          title: metadata.title,
+          description: metadata.description,
+          creator: metadata.stageName,
+          price: formatEther(orders[i].price),
+        })
+      }
+
+      setNftData(data);
+    }
+
+    if (isConnected) {
+      getNFTs().then();
+    }
+  }, [account])
+
+
+  const fetchMetadata = async (url) => {
+    let response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Unable to find metadata at ${url}: ${response.status}`);
+    }
+
+    const json = await response.json();
+    return json;
+  };
+
   const filteredNfts = useMemo(() => {
     return nftData
       .filter((nft) => {
