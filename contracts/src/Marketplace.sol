@@ -24,6 +24,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         uint tokenId;
         address owner; // address that creates the listing
         address collection;  // NFT address
+        uint id;
     }
 
     struct Auction { // auction details for a single order
@@ -37,6 +38,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         address owner; // address that creates the listing
         address collection;  // NFT address
         address highestBidder;
+        bool claimed;
+        uint id;
     }
 
     address public mpFeesCollector;
@@ -124,6 +127,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         order.owner = msg.sender;
         order.collection = _collection;
         order.left = _amount;
+        order.id = orderCounter;
 
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
 
@@ -167,6 +171,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         auction.collection = _collection;
         auction.highestBidder = address(0);
         auction.tokenId = _tokenId;
+        auction.claimed = false;
+        auction.id = auctionCounter;
 
         isAuction[auctionCounter] = true;
     
@@ -223,6 +229,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         require(isAuction[_auctionId], "Order is not an auction");
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp >= auction.deadline, "Auction is still ongoing");
+        require(!auction.claimed, "Auction already claimed");
 
         // Auction successful case
         if (auction.highestBid >= auction.basePrice) {
@@ -246,6 +253,8 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
             // Auction failed case -> return tokens to the owner
             IERC1155MetadataURI(auction.collection).safeTransferFrom(address(this), auction.owner, auction.tokenId, auction.amount, "");
         }
+
+        auction.claimed = true;
         
         emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
     }
@@ -319,7 +328,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         
         for (uint i = _start; i < _end; i++) {
             Order memory order = orders[i];
-            if (_owner == address(0) || order.owner == _owner) {
+            if ((order.left > 0) && (_owner == address(0) || order.owner == _owner)) {
                 array[effIdx] = order;
                 uris[effIdx] = IERC1155MetadataURI(order.collection).uri(order.tokenId);
                 effIdx++;
