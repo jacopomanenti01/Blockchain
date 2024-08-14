@@ -355,7 +355,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         
         for (uint i = _start; i < _end; i++) {
             Auction memory auction = auctions[i];
-            if ((_owner == address(0) || auction.owner == _owner) && (_bidder == address(0) || _bidder == auction.highestBidder)) {
+            if ((!auction.claimed) && (_owner == address(0) || auction.owner == _owner) && (_bidder == address(0) || _bidder == auction.highestBidder)) {
                 array[effIdx] = auction;
                 uris[effIdx] = IERC1155MetadataURI(auction.collection).uri(auction.tokenId);
                 effIdx++;
