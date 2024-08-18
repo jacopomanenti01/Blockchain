@@ -4,6 +4,8 @@ import { BsImages } from "react-icons/bs";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 import {fetchImage} from "@/utilis/Fetch"
+import { ethers} from 'ethers';
+
 
 
 //INTERNAL IMPORT
@@ -26,7 +28,7 @@ const columns: ColumnDef<pr>[] = [
 ]
 
 
-const NFTDetailsImg = ( {descr, image, address,id, royalties, songs}: any) => {
+const NFTDetailsImg = ( {descr, image, address,id, royalties, songs, genre}: any) => {
   const [description, setDescription] = useState(true);
   const [details, setDetails] = useState(true);
   const [tracks, setTracks] = useState(true);
@@ -106,6 +108,9 @@ const NFTDetailsImg = ( {descr, image, address,id, royalties, songs}: any) => {
             <p>
               {descr}
             </p>
+            <p>
+              genre: {genre}
+            </p>
           </div>
         )}
 
@@ -119,7 +124,6 @@ const NFTDetailsImg = ( {descr, image, address,id, royalties, songs}: any) => {
 
         {details && (
           <div className={Style.NFTDetailsImg_box_details_box}>
-            <small>2000 x 2000 px.IMAGE(685KB)</small>
             <p>
               <small>Contract Address: {address} </small>               
               <br></br>
@@ -130,9 +134,13 @@ const NFTDetailsImg = ( {descr, image, address,id, royalties, songs}: any) => {
             <p>
               <small>Chain: Polygon</small>
             </p>
-            <p>
-              <small>Royalties : {royalties}</small>
-            </p>
+            {royalties !== undefined && royalties !== null ? (
+                <p>
+                  <small>
+                    Royalties: {ethers.utils.formatUnits(royalties.toString(), 6)} %
+                  </small>
+                </p>
+              ) : null}
           </div>
         )}
 

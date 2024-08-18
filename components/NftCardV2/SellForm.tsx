@@ -74,7 +74,7 @@ function SellForm() {
     setOpen(false)
     console.log(data)
     
-    const percentage_format = ethers.utils.parseUnits(data.amount.toString(), 10).toString()
+
     let price_format;
     if(data.paymentToken == process.env.NEXT_PUBLIC_MATIC_ADDRESS ){
       price_format = ethers.utils.parseUnits(data.price.toString(), 18).toString();
@@ -100,7 +100,7 @@ function SellForm() {
           console.log(tx.hash)
 
           try{
-            const tx = await marketplace.createOrder(addressRecord,tokenID, percentage_format, price_format, data.paymentToken  )
+            const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
             location.reload();

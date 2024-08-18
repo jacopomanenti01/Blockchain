@@ -12,6 +12,9 @@ import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
 import { abi as NFTMarketplace } from "@/contracts/out/Marketplace.sol/Marketplace.json"
 import { BigNumber } from 'ethers';
 
+import {fetchFromIPFS} from "@/utilis/Fetch"
+
+
 type NFTData = {
 address: string
 genre: string
@@ -116,14 +119,13 @@ function Page() {
           // Get name 
           const name = await record_contract.name();
           setName(name);
-
           // Get owned NFTs
           try{
             const end = await web3contract.nextNFTId();
             const end_format = parseInt(end.toString(), 10);
             const res = await web3contract.batchGetNFTs(address, 0, end_format, 10);
             console.log("my nfts", res)
-
+            /** 
             // Get Balance
             setBalance((prevBalance) => {
               const newBalance = res[2]
@@ -142,7 +144,35 @@ function Page() {
           
             // Spread the elements of res into the nfts state
             pushUris(setNftsUri, res[3])
+            */
             
+
+            //
+
+             // create control variables
+             let tokenOwned = [];
+             let balanceOwned : number[] = [];
+             let nftsUri = res[3];
+             let effeix = res[1].length
+
+             for (let i=0; i< effeix; i ++){
+              const token = res[1][i] ;
+              const balance  = res[2][i]
+              tokenOwned[i] =  parseInt(token.toString(), 10) 
+              balanceOwned[i] = parseInt(balance.toString(), 10);  
+            }
+   
+
+ 
+              // set order ids
+              setNftsUri(nftsUri)
+ 
+              //set balance
+              setBalance(balanceOwned);
+  
+               // set the token id of each unique nft
+               setTokenID(tokenOwned)
+
           }catch(e){
             console.log(e)
           }
@@ -197,59 +227,6 @@ function Page() {
 
               // set collection address
               setCollection(collectionAddress)
-
-
-            /** 
-      
-            // create a map of id orders for each token
-            const tokenToIdMap = tokenOrder.reduce((acc, token, index) => {
-              if (!acc[token]) {
-                acc[token] = [];
-              }
-              acc[token].push(idOrder[index]);
-              return acc;
-            }, {});
-            
-            // set order ids
-            setIdOrder(tokenToIdMap)
-            
-            // get the balance of each unique nft
-            let updatedBalance = []; 
-              for (let i = 0; i < tokenOrder.length; i++) {
-                const token = tokenOrder[i];
-                const balance = balanceOrder[i]
-            
-                // If the token already exists, sum the balance, otherwise set the initial balance
-                if (updatedBalance[token] !== undefined) {
-                  updatedBalance[token] += balance;
-                } else {
-                  updatedBalance[token] = balance;
-                }
-                console.log("update balance", updatedBalance)
-              }
-
-              // create a map of balance for each token
-              const tokenToBalanceMap = tokenOrder.reduce((acc: { [key: number]: number }, token, index) => {
-                acc[token] = updatedBalance[index];
-                return acc;
-              }, {});
-
-              //set balance
-              setBalanceOrder(updatedBalance);
-
-            // get the token id of each unique nft
-             pushTokenID(
-              setTtokenIDOrder,
-              tokenOrder,
-              (bn :any) => parseInt(bn.toString(), 10) // Converter function
-            );
-             
-            //spred orderds' uris
-            setnftsUriOrder(prevItems => {
-              const uniqueUris = Array.from(new Set([...prevItems, ...nftsUriOrder]));
-              return uniqueUris;
-            });
-            */
 
           }catch(e){
             console.log(e)
@@ -318,6 +295,8 @@ function Page() {
     init();
   }, [isConnected]);
 
+  /** 
+
   function pushTokenID<T, U>(
     setter: React.Dispatch<React.SetStateAction<T[]>>,
     newItems: U[],
@@ -343,6 +322,7 @@ function Page() {
       return [...prevItems, ...uniqueItems];
     });
   }
+    */
 
   // useEffect to handle the updated nftsUri state
   useEffect(() => {
@@ -450,22 +430,7 @@ function Page() {
     });
   }
 
-  //fetch json file from IPFS
-  const fetchFromIPFS = async (cid: string) => {
-    try {
-      const url = `https://gateway.pinata.cloud/ipfs/${cid}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Error fetching data: ${response.statusText}`);
-      }
-      const data = await response.json();
-      return data;
-
-    } catch (error) {
-      console.error("Error fetching from IPFS:", error);
-    }
-  };
+  
 
 
   return (

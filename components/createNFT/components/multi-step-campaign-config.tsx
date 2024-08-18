@@ -81,8 +81,7 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values, address) =>
 	const record_address = await web3contract.associatedNFT(address);
 	const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer)	
 	let CID = ""
-	const percentage = ethers.utils.parseUnits(values.shareCount.toString(), 6).toString();
-
+	
 
 	try {
 		const formData = new FormData();
@@ -101,9 +100,10 @@ const saveFormData: SubmitHandler<CampaignFormType> = async (values, address) =>
 		alert("Trouble uploading file");
 	  } 
 	  try{ 
-		const tx = await record_contract.createAlbum(percentage, values.singerId, `https://blush-active-cephalopod-524.mypinata.cloud/ipfs/${CID}`)
+		const tx = await record_contract.createAlbum(values.shareCount, values.singerId, `https://blush-active-cephalopod-524.mypinata.cloud/ipfs/${CID}`)
 		await tx.wait()
 		console.log(tx.hash)
+		location.reload();
     } catch (e) {
       console.log(e);
       alert("Trouble uploading file");

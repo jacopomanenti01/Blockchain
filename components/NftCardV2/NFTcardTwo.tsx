@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import Style from "./NFTcardTwo.module.css";
 import { Button } from "../ui/button";
 import {Web3DataContext} from "@/app/author/page"
-
+import {fetchImage} from "@/utilis/Fetch"
 
 
 interface FormContext {
@@ -54,16 +54,7 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
   const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
 
   
-  //fetch image 
-  const fetchImage = (nft: any): string => {
-    const url_image = nft.url_image;
-    if (url_image) {
-      const cid = url_image.split("/").pop();
-      const url = `https://gateway.pinata.cloud/ipfs/${cid}`;
-      return url;
-    }
-    return     "/images/nfts/Babycoverart.jpg"    ; // Fallback image
-  };
+  
 
   const handleCardClick = (collection:string , id : number) => {
     router.push(`/NFTdetails/${collection}/${id}`);
@@ -88,7 +79,7 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
           <div className={Style.NFTCardTwo_box_img}>
             
             <Image
-              src={fetchImage(nft)}
+              src={fetchImage(nft.url_image)}
               alt={nft.title}
               width={500}
               height={500}

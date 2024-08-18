@@ -15,6 +15,7 @@ import { abi as NFTMarketplace } from "@/contracts/out/Marketplace.sol/Marketpla
 import {fetchFromIPFS} from "@/utilis/Fetch"
 import { nft } from "@/backend/schema/deploy";
 
+
 type NFTData = {
   address: string
   genre: string
@@ -34,6 +35,7 @@ type Singer = {
   genre: string
   imageUrl: string
   exists: string
+  initialFee: number
   };
 
 
@@ -57,6 +59,8 @@ const Nftpage = () => {
   const [nftUri, setNftUri] = useState<string| null>(null);
   const [nftData, setNftData] = useState<NFTData | null>(null)
   const [name, setName] = useState<Singer | null>(null)
+  const [initialFee, setInitialFee] = useState<Singer | null>(null)
+
 
 
 
@@ -123,13 +127,17 @@ const Nftpage = () => {
 useEffect(()=>{
   const getSigner = async ()=>{
     let name; 
+    let initialFee;
     if(nftContract){
       name = await nftContract.name()
+      initialFee = await nftContract.recordCompanyFee()
     }
     setName(name)
+    setInitialFee(initialFee)
   }
   getSigner()
   console.log("render", render)
+  console.log(nftData)
   
 },[nftData])
 
@@ -145,8 +153,8 @@ useEffect(()=>{
     <div className={Style.NFTDetailsPage}>
       <div className={Style.NFTDetailsPage_box}>
       
-        <NFTDetailsImg descr={nftData?.description} image = {nftData?.url_image} address = {collectionAddress} id = {id} royalties = {nftData?.shareCount} songs = {nftData?.song}/>
-        <NFTDescription title = {nftData?.title} name = {name}  render = {render} marketplace ={marketplace} orderID={order}/>
+        <NFTDetailsImg descr={nftData?.description} genre ={nftData?.genre} image = {nftData?.url_image} address = {collectionAddress} id = {id} royalties = {initialFee} songs = {nftData?.song}/>
+        <NFTDescription title = {nftData?.title} name = {name}  render = {render} marketplace ={marketplace} orderID={order} auctionID = {auction} signer ={signer} user = {address}/>
       </div>
     </div>
   </div>

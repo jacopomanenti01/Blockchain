@@ -14,6 +14,8 @@ import { ethers} from 'ethers';
 import Style from "./NFTcardTwo.module.css";
 import { Button } from "../ui/button";
 import {Web3DataContext} from "@/app/author/page"
+import {fetchImage} from "@/utilis/Fetch"
+
 
 
 /** 
@@ -66,16 +68,6 @@ const NFTCardOwned = ({ NFTData }:NFTCardTwoProps) => {
 
 
   
-  //fetch image 
-  const fetchImage = (nft: any): string => {
-    const url_image = nft.url_image;
-    if (url_image) {
-      const cid = url_image.split("/").pop();
-      const url = `https://gateway.pinata.cloud/ipfs/${cid}`;
-      return url;
-    }
-    return     "/images/nfts/Babycoverart.jpg"    ; // Fallback image
-  };
 
   // remove nft from marketplace by id
   const onClick = async (id : any)=>{
@@ -123,7 +115,7 @@ const NFTCardOwned = ({ NFTData }:NFTCardTwoProps) => {
           <div className={Style.NFTCardTwo_box_img}>
             
             <Image
-              src={fetchImage(nft)}
+              src={fetchImage(nft.url_image)}
               alt={nft.title}
               width={500}
               height={500}
