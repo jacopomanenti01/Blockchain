@@ -49,7 +49,7 @@ function SellForm() {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
-  const {signer, provider, marketplace,addressRecord, contractRecord, address, handleTransactionSuccess} = useContext(Web3DataContext)
+  const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
   const {tokenID, balance} = useContext(TokenContext)
   const router = useRouter();
 
@@ -73,7 +73,8 @@ function SellForm() {
     setLoading(true)
     setOpen(false)
     console.log(data)
-
+    
+    const percentage_format = ethers.utils.parseUnits(data.amount.toString(), 10).toString()
     let price_format;
     if(data.paymentToken == process.env.NEXT_PUBLIC_MATIC_ADDRESS ){
       price_format = ethers.utils.parseUnits(data.price.toString(), 18).toString();
@@ -99,12 +100,10 @@ function SellForm() {
           console.log(tx.hash)
 
           try{
-            const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
+            const tx = await marketplace.createOrder(addressRecord,tokenID, percentage_format, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
-            handleTransactionSuccess(true)
-            router.refresh();
-
+            location.reload();
 
           }catch(e){
             console.log(e)
@@ -115,8 +114,7 @@ function SellForm() {
             const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
-            handleTransactionSuccess(true)
-            router.refresh();
+            location.reload();
 
           }catch(e){
             console.log(e)
@@ -161,9 +159,9 @@ function SellForm() {
                 name="price"
                 render={({field})=>(
                     <FormItem>
-                      <FormLabel>price</FormLabel>
+                      <FormLabel>price (eth)</FormLabel>
                       <FormControl>
-                        <Input {...field} type="price" placeholder='1'/>
+                        <Input {...field} type="number" step="any"  min="0" placeholder="0.0001" onChange={(e) => field.onChange(parseFloat(e.target.value))}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -3,8 +3,10 @@ import Image from "next/image";
 import { BsImage } from "react-icons/bs";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { GiMicrophone } from "react-icons/gi";
-import SellButton from "@/components/NftCardV2/SellButton"
+import RemoveButton from "@/components/NftCardV2/RemoveButton"
 import { useRouter } from 'next/navigation';
+import { ethers} from 'ethers';
+
 
 
 
@@ -14,20 +16,24 @@ import { Button } from "../ui/button";
 import {Web3DataContext} from "@/app/author/page"
 
 
-
+/** 
 interface FormContext {
   tokenID: number
   balance: number
+  ids: number
 
 }
+
 
 const initialFormData: FormContext = {
   tokenID: 0,
   balance: 0,
+  ids: 0
 
 };
 
-export const TokenContext = React.createContext<FormContext>(initialFormData)
+export const OrderContext = React.createContext<FormContext>(initialFormData)
+*/
 
 interface NFT {
   address: string
@@ -41,6 +47,9 @@ interface NFT {
   year: number
   tokenID: number
   balance:number
+  id : number
+  price: number
+  collection: string
   };
 
 interface NFTCardTwoProps {
@@ -49,9 +58,12 @@ interface NFTCardTwoProps {
 
 
 
-const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
-  const router = useRouter();
+const NFTCardOwned = ({ NFTData }:NFTCardTwoProps) => {
+
+  const [loading, setLoading] = useState(false)
   const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
+  const router = useRouter();
+
 
   
   //fetch image 
@@ -65,18 +77,41 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
     return     "/images/nfts/Babycoverart.jpg"    ; // Fallback image
   };
 
-  const handleCardClick = (collection:string , id : number) => {
-    router.push(`/NFTdetails/${collection}/${id}`);
+  // remove nft from marketplace by id
+  const onClick = async (id : any)=>{
+
+    setLoading(true)
+    console.log(id)
+    if(contractRecord && address && marketplace){
+      try{
+        const tx = await marketplace.cancel(id)
+        await tx.wait()
+        console.log(tx.hash)
+        location.reload();
+
+      }catch(e){
+        console.log(e)
+      }
+    }else{
+      alert("please log to metamask")
+    }
+  }
+
+  const handleCardClick = (collection:string , id : number, order: number) => {
+    router.push(`/NFTdetails/${collection}/${id}?order=${order}`);
   };
 
 
   return (
     <div className={Style.NFTCardTwo}>
+      
       {NFTData.map((nft, i):any => (
-        addressRecord !== null &&
-        <div className={Style.NFTCardTwo_box} key={i + 1}
-        onClick={() => handleCardClick(addressRecord, nft.tokenID)}
->
+        nft.balance !== undefined && nft.balance !== 0 &&(
+          <div
+          className={Style.NFTCardTwo_box}
+          key={i + 1}
+          onClick={() => handleCardClick(nft.collection, nft.tokenID, nft.id)}
+        >
           <div className={Style.NFTCardTwo_box_like}>
             <div className={Style.NFTCardTwo_box_like_box}>
               <div className={Style.NFTCardTwo_box_like_box_box}>
@@ -99,18 +134,21 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
 
           <div className={Style.NFTCardTwo_box_info}>
             <div className={Style.NFTCardTwo_box_info_left}>
-              <p>{nft.title}#{i + 1}</p>
+              <p>{nft.title}</p>
+              <small>Order number #{nft.id}</small>
+              
+              <small>Order price: {ethers.utils.formatUnits(nft.price.toString(),18)+ ' ETH'}</small>
             </div>
             <small>{nft.balance}</small>
           </div>
           
           <div className={Style.NFTCardTwo_box_price}>
-            <div className={Style.NFTCardTwo_box_price_box} onClick={(event) => event.stopPropagation()} >
-              <small>Click to sell</small>
-              <TokenContext.Provider value = {{ tokenID: nft.tokenID, balance: nft.balance}}>
-
-              <SellButton />
-              </TokenContext.Provider>
+            <div className={Style.NFTCardTwo_box_price_box} onClick={(event) => event.stopPropagation()}>
+              <small>click to </small>
+              <Button onClick={() => onClick(nft.id)}  type="button" className="w-full">
+                   Remove
+              </Button>
+      
             </div>
             {/** */}
             <p className={Style.NFTCardTwo_box_price_stock}>
@@ -118,9 +156,9 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
             </p>
           </div>
         </div>
-      ))}
+      )))}
     </div>
   );
 };
 
-export default NFTCardTwo;
+export default NFTCardOwned;

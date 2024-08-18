@@ -80,14 +80,7 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
     .int().gte(1,{
         message: "please enter at leat 1 share",
     }),
-    price: z.coerce.number({
-        
-        required_error: "price is required",
-        invalid_type_error: "price must be a number"
-    }) 
-    .int().gte(1,{
-        message: "please set the price at least at 1 MATIC",
-    }),
+    price: z.number().multipleOf(0.000001),
     paymentToken: z.string({
         message: "please enter a valid address",
         required_error: "paymentToken is required",
@@ -145,3 +138,16 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
     
     
   })
+
+  // remove order
+
+  export const removeOrder = z.object({
+    
+    id: z.coerce.number({
+        required_error: "id is required",
+        invalid_type_error: "id must be a number"
+    }) 
+    .int()
+    
+  })
+

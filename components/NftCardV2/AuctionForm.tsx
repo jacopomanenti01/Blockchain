@@ -54,7 +54,7 @@ function AuctionForm() {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
-  const {signer, provider, marketplace,addressRecord, contractRecord, address, handleTransactionSuccess} = useContext(Web3DataContext)
+  const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
   const {tokenID, balance} = useContext(TokenContext)
   const router = useRouter();
   
@@ -122,8 +122,7 @@ function AuctionForm() {
             const tx = await marketplace.createAuction(addressRecord,tokenID, data.amount, price_format,minIncrement_format, deadline,data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
-            handleTransactionSuccess(true)
-            router.refresh();
+            location.reload();
 
           }catch(e){
             console.log(e)
@@ -134,8 +133,7 @@ function AuctionForm() {
             const tx = await marketplace.createAuction(addressRecord,tokenID, data.amount, price_format, minIncrement_format,deadline, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
-            handleTransactionSuccess(true)
-            router.refresh();
+            location.reload();
           }catch(e){
             console.log(e)
           }

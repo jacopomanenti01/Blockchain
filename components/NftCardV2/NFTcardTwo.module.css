@@ -68,7 +68,10 @@
 }
 
 .NFTCardTwo_box_info_left{
-    line-height: 0;
+    display: flex;
+    flex-direction: column; /* This aligns the children in a vertical column */
+    align-items: flex-start; /* Aligns children to the start of the div (left side) */
+    line-height: normal; /* Adjust line height if needed */
 }
 
 .NFTCardTwo_box_info small{
@@ -93,15 +96,14 @@
     padding: 1rem;
 }
 
-.NFTCardTwo_box_price_box p{
-    border:  1px solid grey;
+.NFTCardTwo_box_price_box p {
+    border: 1px solid grey;
     padding: 1.5rem 1rem 1rem 1rem;
     margin-top: .5rem;
     border-radius: .3rem;
-    display: flex;
-    align-items: center;
-    
-
+    white-space: normal;       /* Ensures that text wraps normally */
+    word-wrap: break-word;     /* Ensures long words are broken to fit within the container */
+    overflow-wrap: break-word; /* Provides broader support for breaking long words */
 }
 
 .NFTCardTwo_box_price_box small{
