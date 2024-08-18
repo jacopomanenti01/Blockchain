@@ -28,5 +28,6 @@ forge script DeployerScript --rpc-url <RPC_URL>  --broadcast --verify --ethersca
 ## Deployments
 
 ### Amoy - 80002
-NFTFactory: 0x422761B0B1915c04FFC90511a250627bE1Ec2927. 
-Marketplace: 0x44B044348a491e2BEdD92c29B5EF02388ea078F5.  
+NFTFactory: 0x422761B0B1915c04FFC90511a250627bE1Ec2927  
+Marketplace: 0x44B044348a491e2BEdD92c29B5EF02388ea078F5  
+Marketplace (0.8.20): 0x27319b5114b637d2bC9f0B2b189896562681262c   
