@@ -28,9 +28,6 @@ forge script DeployerScript --rpc-url <RPC_URL>  --broadcast --verify --ethersca
 ## Deployments
 
 ### Amoy - 80002
-Factory: 0x5eCBe814CcdE0164472075CE5eDF919eD57D20fc  
-Marketplace: 0x1118bcd185fDfe622b32829b5B193EcDCBDf5A8E  
 
-
-Factory: 0xBcf86D9859291f3A493c36d742428E8097Cc0d1A.
-Marketplace: 0x69f2b0aaEd1adF60D6f3c69FF3C35D5564754b61.
+Factory: 0x7302D435C60975DDF3F353305AA6b1c02AbB9A79  
+Marketplace: 0x7E5CE4Eb1Ef392De687972Ef160A1db7fF43c92B  
