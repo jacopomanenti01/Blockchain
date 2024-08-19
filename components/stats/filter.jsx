@@ -41,18 +41,20 @@ export default function Component() {
 
       const end = await  marketplace.orderCounter();
       const aEnd = await  marketplace.auctionCounter();
+      let orders, uris, size;
       try {
-        const [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
-      console.log("uri", uris)
-      console.log("size", size.toString())
-      console.log("nft", orders)
-        
+        [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
+        console.log("uri", uris)
+        console.log("size", size.toString())
+        console.log("nft", orders)
+          
       } catch (error) {
         console.log(error)
         
       }
+      let auctions, aUris, aSize;
       try {
-        const [auctions, aUris, aSize] = await marketplace.getAuctions(0, aEnd, ethers.constants.AddressZero,ethers.constants.AddressZero);
+        [auctions, aUris, aSize] = await marketplace.getAuctions(0, aEnd, ethers.constants.AddressZero,ethers.constants.AddressZero);
         console.log("sizea", aSize.toString())
         
       } catch (error) {
@@ -65,7 +67,6 @@ export default function Component() {
       const data = [];
       //change index
       try {
-        console.log("cazzo", size.toString)
         for (let i = 0; i < size.toString(); i++) {
         const nftUri = uris[i];
         // Check if the URI is a valid non-empty string and starts with "https://"
@@ -143,7 +144,7 @@ export default function Component() {
     if (isConnected) {
       getNFTs().then();
     }
-  }, [account])
+  }, [isConnected])
 
   useEffect(()=>{
     console.log(auctionData)
@@ -193,30 +194,33 @@ export default function Component() {
   }, [sortBy, filterBy, nftData, auctionData]);
 
   return (
+    
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
         <div className="bg-background rounded-lg shadow-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Filters</h2>
           <div className="grid gap-4">
             <div>
-              <h3 className="text-base font-medium mb-2">Creator</h3>
+              <h3 className="text-base font-medium mb-2">Singer</h3>
               <div className="grid gap-2">
-                {[...new Set(nftData.map((nft) => nft.creator))].map((creator) => (
-                  <Label key={creator} className="flex items-center gap-2 font-normal">
-                    <Checkbox
-                      checked={filterBy.creator.includes(creator)}
-                      onCheckedChange={() => {
-                        setFilterBy((prevState) => ({
-                          ...prevState,
-                          creator: prevState.creator.includes(creator)
-                            ? prevState.creator.filter((c) => c !== creator)
-                            : [...prevState.creator, creator],
-                        }))
-                      }}
-                    />
-                    {creator}
-                  </Label>
-                ))}
+      
+              {[...new Set(nftData.map((nft) => nft.creator))].map((creator) => (
+                <Label key={creator} className="flex items-center gap-2 font-normal">
+                  <Checkbox
+                    checked={filterBy.creator.includes(creator)}
+                    onCheckedChange={() => {
+                      setFilterBy((prevState) => ({
+                        ...prevState,
+                        creator: prevState.creator.includes(creator)
+                          ? prevState.creator.filter((g) => g !== creator)
+                          : [...prevState.creator, creator],
+                      }))
+                    }}
+                  />
+                  {creator}
+                </Label>
+              ))}
+                
               </div>
             </div>
             <div>
@@ -308,6 +312,7 @@ export default function Component() {
             </div>
           </div>
         </div>
+        {!isConnected ? (<div>Connect to metamask in order to visualize the available nfts</div>): (
         <div>
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold">NFT Marketplace</h1>
@@ -332,17 +337,18 @@ export default function Component() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {filteredNfts.map((nft) => (
-<Card 
-  key={nft.id} 
-  className="bg-background rounded-lg shadow-lg overflow-hidden"
-  onClick={() => 
-    nft.type === 'buy' 
-      ? handleCardClick(nft.collection, nft.tokenID, nft.orderID) 
-      : handleCardClickAuction(nft.collection, nft.tokenID, nft.auctionID)
-  }
->                <Link href="#" className="block" prefetch={false}>
+              <Card 
+                key={nft.id} 
+                className="bg-background rounded-lg shadow-lg overflow-hidden"
+                onClick={() => 
+                  nft.type === 'buy' 
+                    ? handleCardClick(nft.collection, nft.tokenID, nft.orderID) 
+                    : handleCardClickAuction(nft.collection, nft.tokenID, nft.auctionID)
+                }
+              >                <Link href="#" className="block" prefetch={false}>
                   <img
                     src={nft.image}
                     alt={nft.title}
@@ -395,11 +401,11 @@ export default function Component() {
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-        </div>
-        </div>
-      </div>
-    </div>
-  )
+         </div>
+       </div>  )}
+</div>
+</div>
+)
 }
 
 function ListOrderedIcon(props) {

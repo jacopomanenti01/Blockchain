@@ -108,22 +108,8 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
     .int().gte(1,{
         message: "please enter at leat 1 share",
     }),
-    basePrice: z.coerce.number({
-        
-        required_error: "basePrice is required",
-        invalid_type_error: "basePrice must be a number"
-    }) 
-    .int().gte(1,{
-        message: "please set the basePrice at least at 1 MATIC",
-    }),
-    minIncrement: z.coerce.number({
-        
-        required_error: "minIncrement is required",
-        invalid_type_error: "minIncrement must be a number"
-    }) 
-    .int().gte(1,{
-        message: "please set the minIncrement at least at 1 MATIC",
-    }),
+    basePrice: z.number().multipleOf(0.000001),
+    minIncrement: z.number().multipleOf(0.000001),
     deadline: z.date({
         required_error: "A deadline is required.",
       }),
@@ -149,5 +135,15 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
     }) 
     .int()
     
+  })
+
+  // bid
+
+  export const bid = z.object({
+    
+    
+    price: z.number().multipleOf(0.000001),
+    
+
   })
 

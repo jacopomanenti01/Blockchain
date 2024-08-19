@@ -22,6 +22,7 @@ const CampaignForm = () => {
 	const [signer, setSigner] = useState<ethers.Signer | null>(null);
     const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
     const [contract, setContract] = useState<ethers.Contract | null>(null);
+	const [sending, setSending] = useState<boolean>(false)
 
 
 	useEffect(()=>{
@@ -43,14 +44,20 @@ const CampaignForm = () => {
 
 	const handleNext = async () => {
 		if (currentStep === 0) {
+			setSending(true)
 			const formData = form.getValues();
 			if(contract){
 				try{
 					const tx = await contract.createSinger(formData.stageName,formData.description,formData.genre, "htttps://" )
 					await tx.wait()
 					console.log(tx.hash)
+					setSending(false)
+
+
 				}catch(err){
 					console.log(err)
+					setSending(false)
+
 				}
 		}
 			;
@@ -68,7 +75,7 @@ const CampaignForm = () => {
 				<MultiStepNavButtons
 					context={CampaignFormContext}
 					previousLabel="Previous"
-					nextLabel="Next"
+					nextLabel={sending == true ? "Sending": "Next"}
 					endStepLabel="Mint"
 					onNext={handleNext}
 				/>

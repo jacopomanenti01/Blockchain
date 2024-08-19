@@ -138,6 +138,7 @@ useEffect(()=>{
   getSigner()
   console.log("render", render)
   console.log(nftData)
+  console.log("auction", auction)
   
 },[nftData])
 

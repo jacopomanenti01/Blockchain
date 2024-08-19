@@ -27,7 +27,7 @@ const AuthorTaps = ({
       setCreated(false);
       setAuction(false);
       setActiveBtn(1);
-    } else if (btnText == "Created") {
+    } else if (btnText == "Owned") {
       setCollectiables(false);
       setCreated(true);
       setAuction(false);
@@ -56,7 +56,7 @@ const AuthorTaps = ({
               className={`${activeBtn == 2 ? Style.active : ""}`}
               onClick={(e) => openTab(e)}
             >
-              Created
+              Owned
             </button>
             <button
               className={`${activeBtn == 3 ? Style.active : ""}`}

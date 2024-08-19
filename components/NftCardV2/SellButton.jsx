@@ -20,6 +20,7 @@ export const Context = React.createContext()
   
   function SellButton() {
     const [open, setOpen] = useState(false);
+    const [selling, setSelling] = useState(false)
 
     // chiamare la funzione nft.isApprovedForAll(marketplace address
 
@@ -28,7 +29,7 @@ export const Context = React.createContext()
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
               <Button className="px-9 py-3 text-lg font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600">
-                sell
+                {selling == true ? "selling" : "sell"}
               </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
@@ -48,7 +49,7 @@ export const Context = React.createContext()
 
 
             <div className="grid flex-1 gap-2">
-              <FormHandler/>
+              <FormHandler setter = {setSelling}/>
   
               
 

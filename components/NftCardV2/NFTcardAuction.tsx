@@ -6,7 +6,7 @@ import { GiMicrophone } from "react-icons/gi";
 import RemoveButton from "@/components/NftCardV2/RemoveButton"
 import { useRouter } from 'next/navigation';
 import {Web3DataContext} from "@/app/author/page"
-
+import { ethers} from 'ethers';
 
 //INTERNAL IMPORT
 import Style from "./NFTcardTwo.module.css";
@@ -90,6 +90,8 @@ const NFTCardAuction = ({ NFTData }:NFTCardTwoProps) => {
     }
 
 
+
+
   return (
     <div className={Style.NFTCardTwo}>
       {NFTData.map(
@@ -122,7 +124,7 @@ const NFTCardAuction = ({ NFTData }:NFTCardTwoProps) => {
                   <p>{nft.title}</p>
                   <small>Auction number #{nft.id}</small>
               
-                  <small>Auction baseprice: {nft.basePrice}</small>
+                  <small>Auction baseprice: {ethers.utils.formatUnits(nft.basePrice.toString(),18)+ 'ETH'} </small>
                 </div>
                 <small>{nft.balance}</small>
               </div>

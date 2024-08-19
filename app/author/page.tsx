@@ -89,6 +89,8 @@ function Page() {
   const [tokenIDAuction, setTokenIDAuction] = useState<Array<number>>([]);
   const [nftsUriAuction, setnftsUriAuction] = useState<Array<string>>([]);
   const [nftsJSONAuction, setnftsJSONAuction] = useState<Array<NFTData>>([]);
+  const [collectionAuction, setCollectionAuction] = useState<Array<string>>([]);
+
 
 
 
@@ -116,8 +118,14 @@ function Page() {
             // nft contract instance
             const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer);
             // Get name 
-            const name = await record_contract.name();
-            setName(name);
+            try {
+              const getName = await record_contract.name();
+              setName(getName || "");
+            } catch (error) {
+              console.error("Error fetching name:", error);
+              setName(address);
+            }
+            
             setcontractRecord(record_contract);
             setaddressRecord(record_address);
             
@@ -235,6 +243,7 @@ function Page() {
             const numberAuction = await marketpalce_contract.auctionCounter()
             const numberAuction_format = parseInt(numberAuction.toString(), 10);
             const auctions = await marketpalce_contract.getAuctions(0, numberAuction_format, address, "0x0000000000000000000000000000000000000000");
+            console.log("auctions", auctions)
 
             // create control variables
             let tokenAuction = [];
@@ -244,21 +253,27 @@ function Page() {
             let basePrice : number[] = [];
             let deadlines : Date[] = [];
             let idAuction: number[]= [];
+            let collectionAddress :string[] = []
+
 
 
             //extract values for each variable
 
             for (let i=0; i< effIdx; i ++){
-              const token = auctions[0][i][9] ;
+              const token = auctions[0][i][0] ;
               const balance  = auctions[0][i][6]  
               const id = auctions[0][i][11] 
               const price = auctions[0][i][2] 
               const deadline = auctions[0][i][4]
+              const collection = auctions[0][i][8]
+
               tokenAuction[i] =  parseInt(token.toString(), 10) 
               balanceAuction[i] = parseInt(balance.toString(), 10);  
               idAuction[i]= parseInt(id.toString(), 10);
               basePrice[i] = parseInt(price.toString(), 10);
               deadlines[i]= new Date(BigNumber.from(deadline).toNumber()* 1000)
+              collectionAddress[i] = collection
+
             }
 
             // set order ids
@@ -277,6 +292,9 @@ function Page() {
 
              // set deadline
              setDeadline(deadlines)
+
+             // set collection
+             setCollectionAuction(collectionAddress)
 
 
           }catch(e){
@@ -370,6 +388,8 @@ function Page() {
             data.id = idAuction[i]
             data.basePrice = basePrice[i]
             data.deadline = deadline[i]
+            data.collection = collectionAuction[i]
+
             console.log(data)
   
             if(data.balance){
@@ -387,7 +407,7 @@ function Page() {
       }
     }, [nftsUriAuction, tokenIDAuction]);
 
-    useEffect(()=>{console.log("ooooo",nftsJSON)},[nftsJSON])
+    useEffect(()=>{console.log("ooooo",nftsJSONAuction)},[nftsJSONAuction])
   
   // prevent json duplicates 
   function uniqueById(items:any) {
@@ -399,15 +419,16 @@ function Page() {
     });
   }
 
+ 
   
 
 
   return (
     <div>
       <Navbar />
-      <Banner bannerImage={"/images/nfts/Babycoverart.jpg"} />
+      <Banner bannerImage={"/images/nfts/sfondo.jpg"} />
       <AuthorProfileCard
-        setAddress={addressRecord}
+        setAddress={addressRecord !== "0x0000000000000000000000000000000000000000" ? addressRecord : address}
         name={name}
       />
       <AuthorTaps

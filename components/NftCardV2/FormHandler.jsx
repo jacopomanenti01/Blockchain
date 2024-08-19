@@ -1,22 +1,32 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SellForm from "./SellForm"
 import AuctionForm from "./AuctionForm"
+import React, { useState, useEffect } from 'react'
 
-import React from 'react'
+function FormHandler({setter}) {
+  const [selling, setSelling] = useState(false)
+  const [putting, setPutting] = useState(false)
 
-function FormHandler() {
+  useEffect(() => {
+    if (selling || putting) {
+      setter(true);
+    } else{
+      setter(false);
+    }
+  }, [selling, putting]);
+
   return (
     <div>
         <Tabs defaultValue="Sell" className="w-[400px]">
             <TabsList>
-                <TabsTrigger value="Sell">Sell</TabsTrigger>
-                <TabsTrigger value="Auction">Auction</TabsTrigger>
+                <TabsTrigger value="Sell">{selling == true ? "Selling":"Sell"}</TabsTrigger>
+                <TabsTrigger value="Auction">{putting == true ? "Putting":"Auction"}</TabsTrigger>
             </TabsList>
             <TabsContent value="Auction">
-                <AuctionForm/>
+                <AuctionForm setter = {setPutting}/>
                 </TabsContent>
                 <TabsContent value="Sell">
-                  <SellForm/>
+                  <SellForm setter = {setSelling}/>
                 </TabsContent>
                 
         </Tabs>

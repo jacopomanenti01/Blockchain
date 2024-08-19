@@ -34,7 +34,6 @@ import {Context} from "./SellButton"
 import {TokenContext} from "./NFTcardTwo"
 import {Web3DataContext} from "@/app/author/page"
 import { abi as GenericERC20  } from "@/contracts/out/GenericERC20.sol/GenericERC20.json";
-import { abi as ERC1155  } from "@/contracts/out/ERC1155.sol/ERC1155.json";
 import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
 import { ethers} from 'ethers';
 
@@ -47,7 +46,7 @@ import { ethers} from 'ethers';
 
 
 
-function SellForm() {
+function SellForm({setter}) {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
@@ -73,6 +72,7 @@ function SellForm() {
     //collection
 
     setLoading(true)
+    setter(true)
     setOpen(false)
     console.log(data)
     
@@ -80,7 +80,6 @@ function SellForm() {
     let price_format;
     if(data.paymentToken == process.env.NEXT_PUBLIC_MATIC_ADDRESS ){
       price_format = ethers.utils.parseUnits(data.price.toString(), 18).toString();
-      console.log(price_format)
  
     }else{
       if(signer){
@@ -107,9 +106,11 @@ function SellForm() {
             await tx.wait()
             console.log(tx.hash)
             location.reload();
+            setter(false)
 
           }catch(e){
             console.log(e)
+            setter(false)
           }
 
         }else{
@@ -118,13 +119,16 @@ function SellForm() {
             await tx.wait()
             console.log(tx.hash)
             location.reload();
+            setter(false)
 
           }catch(e){
             console.log(e)
+            setter(false)
           }
         }
     } else{
       alert("please log to metamask")
+      setter(false)
     }
     }
   

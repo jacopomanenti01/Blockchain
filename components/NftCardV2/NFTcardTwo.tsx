@@ -18,12 +18,14 @@ import {fetchImage} from "@/utilis/Fetch"
 interface FormContext {
   tokenID: number
   balance: number
+  creator: string
 
 }
 
 const initialFormData: FormContext = {
   tokenID: 0,
   balance: 0,
+  creator : ""
 
 };
 
@@ -65,9 +67,9 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
   return (
     <div className={Style.NFTCardTwo}>
       {NFTData.map((nft, i):any => (
-        addressRecord !== null &&
+        
         <div className={Style.NFTCardTwo_box} key={i + 1}
-        onClick={() => handleCardClick(addressRecord, nft.tokenID)}
+        onClick={() => handleCardClick(nft.owner, nft.tokenID)}
 >
           <div className={Style.NFTCardTwo_box_like}>
             <div className={Style.NFTCardTwo_box_like_box}>

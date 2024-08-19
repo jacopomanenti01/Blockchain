@@ -80,9 +80,13 @@ const NFTCardOwned = ({ NFTData }:NFTCardTwoProps) => {
         await tx.wait()
         console.log(tx.hash)
         location.reload();
+        setLoading(false)
+
 
       }catch(e){
         console.log(e)
+        setLoading(false)
+
       }
     }else{
       alert("please log to metamask")
@@ -138,7 +142,7 @@ const NFTCardOwned = ({ NFTData }:NFTCardTwoProps) => {
             <div className={Style.NFTCardTwo_box_price_box} onClick={(event) => event.stopPropagation()}>
               <small>click to </small>
               <Button onClick={() => onClick(nft.id)}  type="button" className="w-full">
-                   Remove
+                   {loading == true ? "Removing" : "Remove"}
               </Button>
       
             </div>

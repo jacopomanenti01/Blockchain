@@ -98,6 +98,13 @@ import {
                         console.error('Error fetching address:', error);
                     }
                   }
+                  if (!isConnected) {
+                    console.log("non va")
+                    localStorage.removeItem('isAdmin')
+                    localStorage.removeItem('isRecord')
+                    setIsAdmin(false)
+                    setIsRecord(false)
+                  }
                 }
  
         fetchAddress()
@@ -152,7 +159,7 @@ import {
 <NavigationMenuItem>
       <NavigationMenuTrigger>Listing</NavigationMenuTrigger>
       <NavigationMenuContent>
-        <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+        <ul className="grid gap-1 p-6 md:w-[400px] lg:w-[300px] ">
           <li>
             <Link href="/collection" >
               
@@ -162,31 +169,12 @@ import {
               
             </Link>
           </li>
-          <li>
-          <Link href="/NFTdetalis" >
-            <ListItem title="Learn More">
-              Learn how to invest in music and what you are going to buy.
-            </ListItem>
-          </Link>
-          </li>
+          
         </ul>
       </NavigationMenuContent>
   </NavigationMenuItem>
 
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Stats</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  
-                  <ListItem  title="Rankings">
-                      See the rankings for all the available songs/album.
-                  </ListItem>
-                  <ListItem  title="Activity">
-                      See in what other people are investing into up to date.
-                  </ListItem>
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
+      
           {isAdmin && (
                     <NavigationMenuItem>
                       <Link href="/whitelist" legacyBehavior passHref>

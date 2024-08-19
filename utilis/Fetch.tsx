@@ -22,7 +22,7 @@ export const  fetchImage = (url_image : string) => {
     const url = `https://gateway.pinata.cloud/ipfs/${cid}`;
     return url;
   }
-  return     "/images/nfts/Babycoverart.jpg"    ; // Fallback image
+  return     "/images/nfts/White.jpg"    ; // Fallback image
 };
 
 

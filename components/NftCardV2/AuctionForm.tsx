@@ -43,19 +43,20 @@ import {auction} from "@/backend/schema/deploy"
 import {Context} from "./SellButton"
 import {TokenContext} from "./NFTcardTwo"
 import {Web3DataContext} from "@/app/author/page"
+import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
 import { abi as GenericERC20  } from "@/contracts/out/GenericERC20.sol/GenericERC20.json";
 import { ethers} from 'ethers';
 
 
 
 
-function AuctionForm() {
+function AuctionForm({setter}) {
 
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
   const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
-  const {tokenID, balance} = useContext(TokenContext)
+  const {tokenID, balance,creator} = useContext(TokenContext)
   const router = useRouter();
   
 
@@ -77,6 +78,7 @@ function AuctionForm() {
   const onSubmit = async (data: z.infer<typeof auction>)=>{
     //tokenID
     //collection
+    setter(true)
     
     setLoading(true)
     setOpen(false)
@@ -109,37 +111,42 @@ function AuctionForm() {
     }
 
     let res;
-    if(contractRecord && address && marketplace){
-      
-      res = await contractRecord.isApprovedForAll(address, process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS ||"");
+    if(creator && address && marketplace && signer){
+      const record_contract = new ethers.Contract(creator, NFTAbi, signer);
+      res = await record_contract.isApprovedForAll(address, process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS ||"");
       console.log(res)
         if(!res){
-          const tx = await contractRecord.setApprovalForAll(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS, true);
+          const tx = await record_contract.setApprovalForAll(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS, true);
           await tx.wait()
           console.log(tx.hash)
 
           try{
-            const tx = await marketplace.createAuction(addressRecord,tokenID, data.amount, price_format,minIncrement_format, deadline,data.paymentToken  )
+            const tx = await marketplace.createAuction(creator,tokenID, data.amount, price_format,minIncrement_format, deadline,data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
             location.reload();
+            setter(false)
 
           }catch(e){
             console.log(e)
+            setter(false)
           }
 
         }else{
           try{
-            const tx = await marketplace.createAuction(addressRecord,tokenID, data.amount, price_format, minIncrement_format,deadline, data.paymentToken  )
+            const tx = await marketplace.createAuction(creator,tokenID, data.amount, price_format, minIncrement_format,deadline, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
             location.reload();
+            setter(false)
           }catch(e){
             console.log(e)
+            setter(false)
           }
         }
     } else{
       alert("please log to metamask")
+      setter(false)
     }
 
   }
@@ -180,7 +187,7 @@ function AuctionForm() {
                     <FormItem>
                       <FormLabel>price</FormLabel>
                       <FormControl>
-                        <Input {...field} type="price" placeholder='1'/>
+                        <Input {...field} type="number" placeholder='1' onChange={(e) => field.onChange(parseFloat(e.target.value))}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -219,7 +226,7 @@ function AuctionForm() {
                     <FormItem>
                       <FormLabel>minIncrement</FormLabel>
                       <FormControl>
-                        <Input {...field} type="minIncrement" placeholder='1'/>
+                        <Input {...field} type="number" placeholder='1' onChange={(e) => field.onChange(parseFloat(e.target.value))}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
