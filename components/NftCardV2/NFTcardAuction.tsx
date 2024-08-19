@@ -72,7 +72,7 @@ const NFTCardAuction = ({ NFTData }:NFTCardTwoProps) => {
 
     setLoading(true)
     console.log(id)
-    if(contractRecord && address && marketplace){
+    if( address && marketplace){
       try{
         const tx = await marketplace.endAuction(id)
         await tx.wait()

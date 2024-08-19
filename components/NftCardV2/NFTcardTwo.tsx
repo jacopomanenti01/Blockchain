@@ -41,6 +41,7 @@ interface NFT {
   year: number
   tokenID: number
   balance:number
+  owner: string
   };
 
 interface NFTCardTwoProps {
@@ -98,7 +99,7 @@ const NFTCardTwo = ({ NFTData }:NFTCardTwoProps) => {
           <div className={Style.NFTCardTwo_box_price}>
             <div className={Style.NFTCardTwo_box_price_box} onClick={(event) => event.stopPropagation()} >
               <small>Click to sell</small>
-              <TokenContext.Provider value = {{ tokenID: nft.tokenID, balance: nft.balance}}>
+              <TokenContext.Provider value = {{ tokenID: nft.tokenID, balance: nft.balance, creator: nft.owner}}>
 
               <SellButton />
               </TokenContext.Provider>

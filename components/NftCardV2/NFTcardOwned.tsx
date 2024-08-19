@@ -74,7 +74,7 @@ const NFTCardOwned = ({ NFTData }:NFTCardTwoProps) => {
 
     setLoading(true)
     console.log(id)
-    if(contractRecord && address && marketplace){
+    if( address && marketplace){
       try{
         const tx = await marketplace.cancel(id)
         await tx.wait()

@@ -5,6 +5,14 @@ import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 import {fetchImage} from "@/utilis/Fetch"
 import { ethers} from 'ethers';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
+import { IoMdInformationCircleOutline } from "react-icons/io";
+
+
 
 
 
@@ -137,7 +145,15 @@ const NFTDetailsImg = ( {descr, image, address,id, royalties, songs, genre}: any
             {royalties !== undefined && royalties !== null ? (
                 <p>
                   <small>
-                    Royalties: {ethers.utils.formatUnits(royalties.toString(), 6)} %
+                  <HoverCard>
+                  Royalties: {ethers.utils.formatUnits(royalties.toString(), 5)} % 
+                 
+                    <HoverCardTrigger><IoMdInformationCircleOutline /> </HoverCardTrigger>
+                      <HoverCardContent>
+                      Percentage of Album Earnings for Royalty Packag
+                      </HoverCardContent>
+                  </HoverCard>
+
                   </small>
                 </p>
               ) : null}

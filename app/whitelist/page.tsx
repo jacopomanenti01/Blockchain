@@ -56,7 +56,7 @@ function Page() {
     const provider = new providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
     const contract = new ethers.Contract(process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "", FactoryAbi, signer);
-    const percentage = ethers.utils.parseUnits(data.initialFee.toString(), 6).toString()
+    const percentage = ethers.utils.parseUnits(data.initialFee.toString(), 5).toString()
     console.log(percentage)
       try{
       const tx = await contract.deployNFT(data.recordName,data.recordAddress,data.recordTreasury, percentage)
@@ -65,7 +65,7 @@ function Page() {
       setLoading(false)
       location.reload();
       }catch{
-        alert("nuuuuuuu")
+        alert("whitelisted")
         setLoading(false)
       }
     

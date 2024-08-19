@@ -34,6 +34,8 @@ import {Context} from "./SellButton"
 import {TokenContext} from "./NFTcardTwo"
 import {Web3DataContext} from "@/app/author/page"
 import { abi as GenericERC20  } from "@/contracts/out/GenericERC20.sol/GenericERC20.json";
+import { abi as ERC1155  } from "@/contracts/out/ERC1155.sol/ERC1155.json";
+import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
 import { ethers} from 'ethers';
 
 
@@ -50,7 +52,7 @@ function SellForm() {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
   const {signer, provider, marketplace,addressRecord, contractRecord, address} = useContext(Web3DataContext)
-  const {tokenID, balance} = useContext(TokenContext)
+  const {tokenID, balance, creator} = useContext(TokenContext)
   const router = useRouter();
 
   
@@ -90,17 +92,18 @@ function SellForm() {
     }
 
     let res;
-    if(contractRecord && address && marketplace){
-      
-      res = await contractRecord.isApprovedForAll(address, process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS ||"");
+    if(address&& creator && marketplace && signer ){
+      const record_contract = new ethers.Contract(creator, NFTAbi, signer);
+      console.log(record_contract)
+      res = await record_contract.isApprovedForAll(address, process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS);
       console.log(res)
         if(!res){
-          const tx = await contractRecord.setApprovalForAll(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS, true);
+          const tx = await record_contract.setApprovalForAll(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS, true);
           await tx.wait()
           console.log(tx.hash)
 
           try{
-            const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
+            const tx = await marketplace.createOrder(creator,tokenID, data.amount, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
             location.reload();
@@ -111,7 +114,7 @@ function SellForm() {
 
         }else{
           try{
-            const tx = await marketplace.createOrder(addressRecord,tokenID, data.amount, price_format, data.paymentToken  )
+            const tx = await marketplace.createOrder(creator,tokenID, data.amount, price_format, data.paymentToken  )
             await tx.wait()
             console.log(tx.hash)
             location.reload();

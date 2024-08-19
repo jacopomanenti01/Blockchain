@@ -66,6 +66,8 @@ function Page() {
   const [nftsJSON, setNftsJSON] = useState<Array<NFTData>>([]);
   const [tokenID, setTokenID] = useState<Array<number>>([]);
   const [balance, setBalance] = useState<Array<number>>([]);
+  const [owners, setOwners] = useState<Array<string>>([]);
+
 
   // Order status
   const [idOrder, setIdOrder] = useState<number[]>([]);
@@ -100,70 +102,62 @@ function Page() {
         try {
           const web3prov = new providers.Web3Provider(window.ethereum);
           const web3signer = web3prov.getSigner();
+          // factory contract instance
           const web3contract = new ethers.Contract(
             process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "",
             NFTFactoryAbi,
             web3signer
           );
+          // marketplace contract instance
           const marketpalce_contract = new ethers.Contract(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS || "", NFTMarketplace, web3signer);
-          const record_address = await web3contract.associatedNFT(address);
-          const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer);
 
+          try {
+            const record_address = await web3contract.associatedNFT(address);
+            // nft contract instance
+            const record_contract = new ethers.Contract(record_address, NFTAbi, web3signer);
+            // Get name 
+            const name = await record_contract.name();
+            setName(name);
+            setcontractRecord(record_contract);
+            setaddressRecord(record_address);
+            
+          } catch (error) {
+              console.log("user not a record company")
+              
+          }
+          
+          // set provider 
           setProvider(web3prov);
+          // set signer
           setSigner(web3signer);
+          // set factory
           setFactory(web3contract);
-          setcontractRecord(record_contract);
-          setaddressRecord(record_address);
+          // set marketplace
           setMarketplace(marketpalce_contract);
 
-          // Get name 
-          const name = await record_contract.name();
-          setName(name);
+          
           // Get owned NFTs
           try{
             const end = await web3contract.nextNFTId();
             const end_format = parseInt(end.toString(), 10);
             const res = await web3contract.batchGetNFTs(address, 0, end_format, 10);
             console.log("my nfts", res)
-            /** 
-            // Get Balance
-            setBalance((prevBalance) => {
-              const newBalance = res[2]
-                .map((bn: any) => parseInt(bn.toString(), 10)) // Convert BigNumbers to integers
-              // Combine and ensure uniqueness using a Set
-              return [...prevBalance, ...newBalance];
-            });
-        
             
-            // Spread tokens' id
-            pushTokenID(
-              setTokenID,
-              res[1],
-              (bn :any) => parseInt(bn.toString(), 10) // Converter function
-            );
-          
-            // Spread the elements of res into the nfts state
-            pushUris(setNftsUri, res[3])
-            */
-            
-
-            //
-
              // create control variables
              let tokenOwned = [];
              let balanceOwned : number[] = [];
              let nftsUri = res[3];
+             let owners : string[] = [] 
              let effeix = res[1].length
 
              for (let i=0; i< effeix; i ++){
+              const owner = res[0][i]
               const token = res[1][i] ;
               const balance  = res[2][i]
               tokenOwned[i] =  parseInt(token.toString(), 10) 
               balanceOwned[i] = parseInt(balance.toString(), 10);  
+              owners[i] = owner
             }
-   
-
- 
               // set order ids
               setNftsUri(nftsUri)
  
@@ -172,6 +166,9 @@ function Page() {
   
                // set the token id of each unique nft
                setTokenID(tokenOwned)
+
+               // set owner
+               setOwners(owners)
 
           }catch(e){
             console.log(e)
@@ -295,35 +292,6 @@ function Page() {
     init();
   }, [isConnected]);
 
-  /** 
-
-  function pushTokenID<T, U>(
-    setter: React.Dispatch<React.SetStateAction<T[]>>,
-    newItems: U[],
-    converter: (item: U) => T
-  ) {
-    setter((prevItems) => {
-      const uniqueItems = newItems
-        .map(converter)
-        .filter((item) => !prevItems.includes(item));
-  
-      return Array.from(new Set([...prevItems, ...uniqueItems]));
-    });
-  }
-
-  function pushUris<T>(
-    setter: React.Dispatch<React.SetStateAction<T[]>>,
-    newItems: T[]
-  ) {
-    setter((prevItems) => {
-      // Prevent duplicates by filtering out items already present in the previous state
-      const uniqueItems = newItems.filter((item) => !prevItems.includes(item));
-      // Return a new array with previous items and the new unique items
-      return [...prevItems, ...uniqueItems];
-    });
-  }
-    */
-
   // useEffect to handle the updated nftsUri state
   useEffect(() => {
     const fetchDataFromIPFS = async () => {
@@ -337,6 +305,7 @@ function Page() {
           // Add tokenID to the data object
           data.tokenID = tokenID[i];
           data.balance= balance[i]
+          data.owner= owners[i]
 
           setNftsJSON((prevdata) => {
             return uniqueById([...prevdata, data]);
@@ -418,7 +387,7 @@ function Page() {
       }
     }, [nftsUriAuction, tokenIDAuction]);
 
-    useEffect(()=>{console.log(nftsJSONAuction)},[nftsJSONAuction])
+    useEffect(()=>{console.log("ooooo",nftsJSON)},[nftsJSON])
   
   // prevent json duplicates 
   function uniqueById(items:any) {

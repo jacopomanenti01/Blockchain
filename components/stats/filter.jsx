@@ -38,17 +38,39 @@ export default function Component() {
       const web3prov = new providers.Web3Provider(window.ethereum);
       const web3signer = web3prov.getSigner();
       const marketplace = new ethers.Contract(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS || "", NFTMarketplace, web3signer);
+
       const end = await  marketplace.orderCounter();
       const aEnd = await  marketplace.auctionCounter();
-
-      const [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
-      const [auctions, aUris, aSize] = await marketplace.getAuctions(0, aEnd, ethers.constants.AddressZero,ethers.constants.AddressZero);
-      console.log(auctions)
+      try {
+        const [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
+      console.log("uri", uris)
+      console.log("size", size.toString())
+      console.log("nft", orders)
+        
+      } catch (error) {
+        console.log(error)
+        
+      }
+      try {
+        const [auctions, aUris, aSize] = await marketplace.getAuctions(0, aEnd, ethers.constants.AddressZero,ethers.constants.AddressZero);
+        console.log("sizea", aSize.toString())
+        
+      } catch (error) {
+        console.log("no auction")
+        
+      }
+      
+      
       const aData = []
       const data = [];
       //change index
-      for (let i = 1; i < size.toString(); i++) {
+      try {
+        console.log("cazzo", size.toString)
+        for (let i = 0; i < size.toString(); i++) {
         const nftUri = uris[i];
+        // Check if the URI is a valid non-empty string and starts with "https://"
+        if (nftUri && nftUri.startsWith("https://blush-active-cephalopod-524.mypinata.cloud")) {
+
         const cid = nftUri.split("/").pop();
         const metadata = await fetchFromIPFS(cid);
 
@@ -66,10 +88,21 @@ export default function Component() {
           type: "buy",
           genre: metadata.genre
         })
+      }else{
+        console.error("Failed to fetch NFTs:");
       }
+    }
+        
+      } catch (error) {
+        console.log("nft order error")
+        
+      }
+      try {
+        console.log("uffa", aSize.toString)
 
       for (let i = 0; i < aSize.toString(); i++) {
         const nftUri = aUris[i];
+        if (nftUri && nftUri.startsWith("https://blush-active-cephalopod-524.mypinata.cloud")) {
         const cid = nftUri.split("/").pop();
         const metadata = await fetchFromIPFS(cid);
 
@@ -93,6 +126,15 @@ export default function Component() {
           genre: metadata.genre
         })
       }
+    }
+        
+      } catch (error) {
+        console.log("nft acution error")
+      }
+        
+  
+    
+  
 
       setNftData(data);
       setAuctionData(aData)
