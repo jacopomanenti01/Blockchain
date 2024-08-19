@@ -51,7 +51,9 @@ contract MarketplaceTest is Test {
         vm.startPrank(recordCompany);
         nft.createSinger("Name", "Desc", "Pop", "https://.../artist/sid");
         nft.createAlbum(shares0Amount, 0, "https://.../artist/sid/albums/aid");
+        nft.createAlbum(shares0Amount, 0, "https://.../artist/sid/albums/aid2");
         nft.safeTransferFrom(recordCompany, seller, 0, shares0Amount, "");
+        nft.safeTransferFrom(recordCompany, seller, 1, shares0Amount, "");
         vm.stopPrank();
     }
 
@@ -315,7 +317,7 @@ contract MarketplaceTest is Test {
         assertEq(left, 0, "Incorrect left amount in order after buy");
     }
 
-        function test_SuccessfulAuctionPaymentToken() public {
+    function test_SuccessfulAuctionPaymentToken() public {
         uint sellAmount = 100;
         uint basePrice = 1e18;
         uint minIncrement = 0.1 * 1e18;
@@ -787,5 +789,30 @@ contract MarketplaceTest is Test {
         assertEq(auctions[0].owner, seller2, "Incorrect owner at id 0");
         assertEq(auctions[0].collection, address(nft), "Incorrect collecton at id 0");
         assertEq(auctions[0].claimed, false, "Incorrect claim status");
+    }
+
+    function test_SuccessfulBuyOrderWithNativeCoinMinimal() public {
+        uint sellAmount = 50;
+        uint sellPrice = 0.5 * 1e18;
+        uint totalSellPrice = sellPrice * sellAmount;
+
+        // Sell
+        vm.startPrank(seller);
+        nft.setApprovalForAll(address(marketplace), true); 
+        marketplace.createOrder(address(nft), 0, sellAmount, sellPrice, address(0));
+        marketplace.createOrder(address(nft), 0, sellAmount, sellPrice, address(0));
+        marketplace.createOrder(address(nft), 1, sellAmount, sellPrice, address(0));
+        marketplace.createOrder(address(nft), 1, sellAmount, sellPrice, address(0));
+        vm.stopPrank();
+
+        // Buy
+        vm.startPrank(buyer);
+        marketplace.buy{value: totalSellPrice}(1, sellAmount);
+        marketplace.buy{value: totalSellPrice}(2, sellAmount);
+        vm.stopPrank();
+
+        uint balance0 = nft.balanceOf(buyer, 0);
+        uint balance1 = nft.balanceOf(buyer, 1);
+        console.log(balance0, balance1);
     }
 }

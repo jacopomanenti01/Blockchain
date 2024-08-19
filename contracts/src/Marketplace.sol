@@ -265,14 +265,18 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
      * @param _buyAmount number of tokens to buy
      */
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
+        require(_orderId < orderCounter, "Invalid order id");
+
         Order storage order = orders[_orderId];
-        require(_buyAmount > 0, "Invali amount");
+        require(msg.sender != order.owner, "Buyer cannot be owner");
+        require(_buyAmount > 0, "Invalid amount");
         require(_buyAmount <= order.left, "Not enough tokens to buy");
 
         INFT nft = INFT(order.collection);
         uint totalPrice = order.price * _buyAmount;
         uint platformFee = (totalPrice * mpFeesPercentage) / PERCENT_DIVIDER;
         uint recordCompanyFee = (totalPrice * nft.recordCompanyFee()) / PERCENT_DIVIDER;
+
         uint sellerAmount = totalPrice - platformFee - recordCompanyFee;
 
         if (order.paymentToken == address(0)) {

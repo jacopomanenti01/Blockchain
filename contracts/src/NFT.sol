@@ -1,30 +1,5 @@
-/*TODO:
-
-Props del NFT
-Standard? ERC1155 
-Cosa rappresenta? Rappresenta tutti gli album gestiti da una casa discografica (ogni casa ha la sua copia di questo contratto). 
-                     Aggiungere AccessControl in modo che la casa discografica possa operarci sopra. Due ruoli: "casa discografica" e "Noi"
-Quando la casa discografica vuole aggiungere canzoni per un cantante, la prima volta fa il deploy di questo contratto e poi può aggiungere canzoni a piacimento.  
-Ci sono delle royalties? si, solo per la casa discografica 
-     Se si, le gestiamo qui o nel marketplace? le impostiamo qui, e vengono riprese nel marketplace, che farà anche lo split automaticamente.
-     Le fee vanno prese (anche dal marketplace) ad ogni scambio e sono cumulative (royalty casa discografica + fee nostra)
-Che operazioni si devono fare? 
-     - creazione di un cantante (nome d'arte, descrizione, genere, url immagine) -> ID (controlla duplicati in base al nome d'arte)
-     - creazione di un album (# di share, ID cantante, url metadati) 
-             -> mint (inoltre whitelista il marketplace ad operare su questa collezione)
-             -> crea associazione tra cantante e token id (album) 
-     - aggiornamento della fee della casa discografica (questo dobbiamo gestirlo noi come "startup")
-Metadati devono contenere:
-     - nome dell'album
-     - nome del cantante
-     - lista delle canzoni
-     - nome della casa discografica
-     - url dell'immagine dell'album*/
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
 
 import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
@@ -33,6 +8,9 @@ import "./interfaces/INFT.sol";
 import "./interfaces/INFTFactory.sol";
 
 contract NFT is ERC1155Supply, AccessControl, INFT {
+
+    uint public constant PERCENT_DIVIDER = 1000000;  // percentage divider, 6 decimals
+
     struct Singer {
         string stageName;
         string description;
@@ -146,6 +124,8 @@ contract NFT is ERC1155Supply, AccessControl, INFT {
      * @param _newFee new fee
      */
     function updateRecordCompanyFee(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_newFee <= PERCENT_DIVIDER, "Fee over 100%");
+
         recordCompanyFee = _newFee;
     }
 
