@@ -146,7 +146,7 @@ function SellForm() {
                         You can sell up to {balance} NFTs available.
                       </FormDescription>
                       <FormControl>
-                        <Input {...field} type="amount" placeholder='1'/>
+                        <Input {...field} type="number" placeholder='1'/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

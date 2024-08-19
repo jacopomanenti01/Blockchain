@@ -13,66 +13,24 @@ import { useAccount } from "wagmi"
 import { abi as NFTMarketplace } from "@/contracts/out/Marketplace.sol/Marketplace.json"
 import { ethers, providers, Signer } from 'ethers';
 import { formatEther } from "viem"
+import { useRouter } from 'next/navigation';
+
+import {fetchFromIPFS} from "@/utilis/Fetch"
+
 
 export default function Component() {
-  // const nftData = [
-  //   {
-  //     id: 1,
-  //     image: "./images/icon-fast.png",
-  //     title: "Cosmic Odyssey",
-  //     description: "Explore the depths of the universe with this captivating NFT.",
-  //     creator: "Galactic Artistry",
-  //     price: 1.2,
-  //   },
-  //   {
-  //     id: 2,
-  //     image: "./images/icon-fast.png",
-  //     title: "Ethereal Bloom",
-  //     description: "Witness the beauty of nature in digital form.",
-  //     creator: "Pixel Botanica",
-  //     price: 0.8,
-  //   },
-  //   {
-  //     id: 3,
-  //     image: "./images/icon-fast.png",
-  //     title: "Cyberpunk Dystopia",
-  //     description: "Dive into a futuristic world of neon and technology.",
-  //     creator: "Neon Architects",
-  //     price: 2.5,
-  //   },
-  //   {
-  //     id: 4,
-  //     image: "./images/icon-fast.png",
-  //     title: "Dreamscape Reverie",
-  //     description: "Escape to a realm of imagination and wonder.",
-  //     creator: "Surreal Visionaries",
-  //     price: 1.7,
-  //   },
-  //   {
-  //     id: 5,
-  //     image: "./images/icon-fast.png",
-  //     title: "Quantum Kaleidoscope",
-  //     description: "Explore the mesmerizing patterns of the digital world.",
-  //     creator: "Pixel Alchemists",
-  //     price: 1.1,
-  //   },
-  //   {
-  //     id: 6,
-  //     image: "./images/icon-fast.png",
-  //     title: "Mythical Menagerie",
-  //     description: "Discover the fantastical creatures of the digital realm.",
-  //     creator: "Pixel Beastmasters",
-  //     price: 0.9,
-  //   },
-  // ]
+  
 
-
+  const router = useRouter();
   const [nftData, setNftData] = useState([]);
+  const [auctionData, setAuctionData] = useState([]);
   const { account, isConnected } = useAccount();
   const [sortBy, setSortBy] = useState("newest")
   const [filterBy, setFilterBy] = useState({
     creator: [],
     price: { min: 0, max: 10 },
+    type: [],
+    genre: []
   })
 
   useEffect(() => {
@@ -81,25 +39,63 @@ export default function Component() {
       const web3signer = web3prov.getSigner();
       const marketplace = new ethers.Contract(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS || "", NFTMarketplace, web3signer);
       const end = await  marketplace.orderCounter();
-      const [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
-      
-      const data = [];
-      for (let i = 0; i < size; i++) {
-        const metadata = await fetchMetadata(uris[i]);
+      const aEnd = await  marketplace.auctionCounter();
 
-        console.log(metadata);
+      const [orders, uris, size] = await marketplace.getOrders(0, end, ethers.constants.AddressZero);
+      const [auctions, aUris, aSize] = await marketplace.getAuctions(0, aEnd, ethers.constants.AddressZero,ethers.constants.AddressZero);
+      console.log(auctions)
+      const aData = []
+      const data = [];
+      //change index
+      for (let i = 1; i < size.toString(); i++) {
+        const nftUri = uris[i];
+        const cid = nftUri.split("/").pop();
+        const metadata = await fetchFromIPFS(cid);
+
+        console.log("metadata", metadata);
 
         data.push({
-          id: i,
+          tokenID: Number(orders[i].tokenId.toString()),
           image: metadata.url_image,
           title: metadata.title,
           description: metadata.description,
           creator: metadata.stageName,
           price: formatEther(orders[i].price),
+          orderID: i,
+          collection: orders[i].collection,
+          type: "buy",
+          genre: metadata.genre
+        })
+      }
+
+      for (let i = 0; i < aSize.toString(); i++) {
+        const nftUri = aUris[i];
+        const cid = nftUri.split("/").pop();
+        const metadata = await fetchFromIPFS(cid);
+
+        const deadlineTimestamp = auctions[i].deadline.toNumber() * 1000; // Moltiplica per 1000 per convertire da secondi a millisecondi
+        const deadlineDate = new Date(deadlineTimestamp);
+        const formattedDeadline = deadlineDate.toLocaleString(); 
+
+        console.log("metadata", metadata);
+
+        aData.push({
+          tokenID: Number(auctions[i].tokenId.toString()),
+          image: metadata.url_image,
+          title: metadata.title,
+          description: metadata.description,
+          creator: metadata.stageName,
+          price: formatEther(auctions[i].highestBid),
+          auctionID: i,
+          collection: auctions[i].collection,
+          deadline: formattedDeadline,
+          type: "bid",
+          genre: metadata.genre
         })
       }
 
       setNftData(data);
+      setAuctionData(aData)
     }
 
     if (isConnected) {
@@ -107,41 +103,53 @@ export default function Component() {
     }
   }, [account])
 
+  useEffect(()=>{
+    console.log(auctionData)
+  },[auctionData])
 
-  const fetchMetadata = async (url) => {
-    let response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Unable to find metadata at ${url}: ${response.status}`);
-    }
-
-    const json = await response.json();
-    return json;
+  const handleCardClick = (collection , id, order) => {
+    router.push(`/NFTdetails/${collection}/${id}?order=${order}`);
   };
 
+  const handleCardClickAuction = (collection , id, auction) => {
+    router.push(`/NFTdetails/${collection}/${id}?auction=${auction}`);
+  };
+
+
   const filteredNfts = useMemo(() => {
-    return nftData
-      .filter((nft) => {
-        if (filterBy.creator.length > 0 && !filterBy.creator.includes(nft.creator)) {
-          return false
+    // Combina nftData e auctionData
+    const combinedData = [...nftData, ...auctionData];
+
+    return combinedData
+      .filter((item) => {
+        if (filterBy.creator.length > 0 && !filterBy.creator.includes(item.creator)) {
+          return false;
         }
-        if (nft.price < filterBy.price.min || nft.price > filterBy.price.max) {
-          return false
+        if (item.price < filterBy.price.min || item.price > filterBy.price.max) {
+          return false;
         }
-        return true
+        if (filterBy.type.length > 0 && !filterBy.type.includes(item.type)) {
+          return false;
+        }
+        if (filterBy.genre.length > 0 && !filterBy.type.includes(item.genre)) {
+          return false;
+        }
+        return true;
       })
       .sort((a, b) => {
         switch (sortBy) {
           case "newest":
-            return b.id - a.id
+            return b.tokenID - a.tokenID; // Assumendo che l'ID più alto sia il più nuovo
           case "price-low":
-            return a.price - b.price
+            return a.price - b.price;
           case "price-high":
-            return b.price - a.price
+            return b.price - a.price;
           default:
-            return 0
+            return 0;
         }
-      })
-  }, [sortBy, filterBy, nftData])
+      });
+  }, [sortBy, filterBy, nftData, auctionData]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
@@ -165,6 +173,48 @@ export default function Component() {
                       }}
                     />
                     {creator}
+                  </Label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-base font-medium mb-2">Type</h3>
+              <div className="grid gap-2">
+                {['buy', 'bid'].map((type) => (
+                  <Label key={type} className="flex items-center gap-2 font-normal">
+                    <Checkbox
+                      checked={filterBy.type.includes(type)}
+                      onCheckedChange={() => {
+                        setFilterBy((prevState) => ({
+                          ...prevState,
+                          type: prevState.type.includes(type)
+                            ? prevState.type.filter((t) => t !== type)
+                            : [...prevState.type, type],
+                        }))
+                      }}
+                    />
+                    {type === 'buy' ? 'Buy' : 'Bid'}
+                  </Label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-base font-medium mb-2">Genre</h3>
+              <div className="grid gap-2">
+                {[...new Set(nftData.map((nft) => nft.genre))].map((genre) => (
+                  <Label key={genre} className="flex items-center gap-2 font-normal">
+                    <Checkbox
+                      checked={filterBy.genre.includes(genre)}
+                      onCheckedChange={() => {
+                        setFilterBy((prevState) => ({
+                          ...prevState,
+                          genre: prevState.genre.includes(genre)
+                            ? prevState.genre.filter((g) => g !== genre)
+                            : [...prevState.genre, genre],
+                        }))
+                      }}
+                    />
+                    {genre}
                   </Label>
                 ))}
               </div>
@@ -242,8 +292,15 @@ export default function Component() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {filteredNfts.map((nft) => (
-              <Card key={nft.id} className="bg-background rounded-lg shadow-lg overflow-hidden">
-                <Link href="#" className="block" prefetch={false}>
+<Card 
+  key={nft.id} 
+  className="bg-background rounded-lg shadow-lg overflow-hidden"
+  onClick={() => 
+    nft.type === 'buy' 
+      ? handleCardClick(nft.collection, nft.tokenID, nft.orderID) 
+      : handleCardClickAuction(nft.collection, nft.tokenID, nft.auctionID)
+  }
+>                <Link href="#" className="block" prefetch={false}>
                   <img
                     src={nft.image}
                     alt={nft.title}
@@ -254,13 +311,18 @@ export default function Component() {
                 </Link>
                 <CardContent className="p-4">
                   <h3 className="text-lg font-semibold mb-2">{nft.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{nft.description}</p>
+                  <p className="text-sm text-muted-foreground mb-4">{nft.type}</p>
+                  {nft.type === 'bid' && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Deadline: {nft.deadline}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <UserIcon className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">{nft.creator}</span>
                     </div>
-                    <div className="text-lg font-semibold">{nft.price} ETH</div>
+                    {nft.type === "buy"? (<div className="text-lg font-semibold">{nft.price} ETH</div>):(<div className="text-lg font-semibold">Bid: {nft.price} ETH</div>) }
                   </div>
                 </CardContent>
               </Card>
