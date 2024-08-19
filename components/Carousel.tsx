@@ -94,7 +94,7 @@ const Carousel = () => {
         
         "
       >
-        More than 50+ brands have sponsored us sucatecelo 
+        More than 50+ brands have sponsored us 
       </div>
 
       <div className="grid grid-cols-3 p-4 md:flex">

@@ -36,7 +36,7 @@ const ActionButtons = () => {
                                 <Link className="styled-link"
                                 href="/"
                                 >
-                                    Sign in 
+                                    Listing 
                                 </Link>
                                 <Link
                                 href="/"

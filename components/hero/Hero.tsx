@@ -35,12 +35,11 @@ const SecondSection = () => {
             More than 2,000 deals completed on Royalty Exchange and new assets added each week.
           </div>
           <div className={style.ctaContainer}>
+          <Link className="styled-link"  href="/collection">        
             <Button className={style.accentedButton} variant="ghost">
               Explore
             </Button>
-            <Button className={style.button} variant="ghost">
-              Publish
-            </Button>
+          </Link>
           </div>
         </div>
         <div className={style.image}>
