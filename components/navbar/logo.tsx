@@ -7,7 +7,7 @@ const Logo = () => {
 
     <Link href="/">
         <Image 
-        src="/images/logo/logo-2.svg" 
+        src="/images/logo/logo.svg" 
         width={50} 
         height={50} 
         alt="logo"

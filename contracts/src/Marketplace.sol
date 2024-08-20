@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import "openzeppelin-contracts/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
@@ -24,10 +24,11 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         uint tokenId;
         address owner; // address that creates the listing
         address collection;  // NFT address
+        uint id;
     }
 
     struct Auction { // auction details for a single order
-        uint auctionId;     // auction ID, starting from 1
+        uint tokenId;
         address paymentToken; // if token is address(0), it means native coin
         uint basePrice;
         uint minIncrement;
@@ -37,11 +38,11 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         address owner; // address that creates the listing
         address collection;  // NFT address
         address highestBidder;
+        bool claimed;
+        uint id;
     }
 
-    // Marketplace variables
     address public mpFeesCollector;
-    // MarketPlace Fee 
     uint public mpFeesPercentage;
 
     uint public orderCounter;
@@ -52,7 +53,6 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     mapping(uint => Order) public orders;
     mapping(uint => Auction) public auctions;
     mapping(uint => bool) public isAuction;
-
 
     /**
      * @notice Initializer
@@ -79,7 +79,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     }
 
     /**
-     * @notice set a new address to collect marketplace fees (DEFAULT_ADMIN_ROLE)
+     * @notice set a new address to collect marketplace fees
      * @param _newMPFeesCollector new treasury address
      */
     function setNewTreasury(address _newMPFeesCollector) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -87,7 +87,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
     }
 
     /**
-     * @notice set a new marketplace fees (scaled by 1000000) (DEFAULT_ADMIN_ROLE)
+     * @notice set a new marketplace fees (scaled by 1000000)
      * @param _newMPFeesPercentage new marketplace fees percentage (scaled by 10^6)
      */
     function setMarketPlaceFee(uint _newMPFeesPercentage) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -117,7 +117,7 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         require(_amount > 0, "Amount must be greater than 0");
         require(nftFactory.isFactoryDeployed(_collection), "Invalid collection");
 
-        IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
+        IERC1155MetadataURI(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
         Order storage  order = orders[orderCounter];
         order.paymentToken = _paymentToken;
@@ -127,12 +127,24 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         order.owner = msg.sender;
         order.collection = _collection;
         order.left = _amount;
+        order.id = orderCounter;
 
         emit NewOrder(orderCounter, _collection, _tokenId, _amount, _price, msg.sender);
 
         orderCounter++;
     }
 
+    /**
+     * @notice create a new auction
+     * @param _collection address of the NFT collection. It must be deployed by the NFT factory
+     * @param _tokenId id of the token in the collection
+     * @param _amount amount of tokens to sell
+     * @param _basePrice base price of the auction
+     * @param _minIncrement minimum increment for each bid
+     * @param _deadline termination timestamp of the auction
+     * @param _paymentToken address of the ERC20 token that the seller wants to receive. 
+                                If address(0), the native coin is used instead
+     */
     function createAuction(
         address _collection,
         uint _tokenId,
@@ -146,10 +158,9 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         require(_deadline > block.timestamp, "Deadline must be in the future");
         require(nftFactory.isFactoryDeployed(_collection), "Invalid collection");
 
-        IERC1155(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
+        IERC1155MetadataURI(_collection).safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
         Auction storage auction = auctions[auctionCounter];
-        auction.auctionId = auctionCounter;
         auction.paymentToken = _paymentToken;
         auction.basePrice = _basePrice;
         auction.minIncrement = _minIncrement;
@@ -159,6 +170,9 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         auction.owner = msg.sender;
         auction.collection = _collection;
         auction.highestBidder = address(0);
+        auction.tokenId = _tokenId;
+        auction.claimed = false;
+        auction.id = auctionCounter;
 
         isAuction[auctionCounter] = true;
     
@@ -167,6 +181,12 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         auctionCounter++;
     }
 
+    /**
+     * @notice create a bid for an auction
+     * @param _auctionId id of the auction to bid
+     * @param _amount if the auction uses an ERC20 token for payments, this is the amount of the bid in that token.
+                        If the auction uses the native coin, this parameter is not used.
+     */
     function bid(uint _auctionId, uint _amount) external payable nonReentrant {
         require(isAuction[_auctionId], "Order is not an auction");
 
@@ -200,10 +220,16 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         emit NewBid(_auctionId, msg.sender, _amount);
     }
 
+    /**
+     * @notice end an auction. If it is successful, it processes the payments and transfers the NFT to the highest bidder.
+                If it is unsuccessful, it returns the token to seller.
+     * @param _auctionId id of the auction
+     */
     function endAuction(uint _auctionId) external nonReentrant {
         require(isAuction[_auctionId], "Order is not an auction");
         Auction storage auction = auctions[_auctionId];
         require(block.timestamp >= auction.deadline, "Auction is still ongoing");
+        require(!auction.claimed, "Auction already claimed");
 
         // Auction successful case
         if (auction.highestBid >= auction.basePrice) {
@@ -222,25 +248,35 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
                 IERC20(auction.paymentToken).safeTransfer(auction.owner, sellerAmount);
             }
 
-            IERC1155(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.auctionId, auction.amount, "");
+            IERC1155MetadataURI(auction.collection).safeTransferFrom(address(this), auction.highestBidder, auction.tokenId, auction.amount, "");
         } else {
             // Auction failed case -> return tokens to the owner
-            IERC1155(auction.collection).safeTransferFrom(address(this), auction.owner, auction.auctionId, auction.amount, "");
+            IERC1155MetadataURI(auction.collection).safeTransferFrom(address(this), auction.owner, auction.tokenId, auction.amount, "");
         }
+
+        auction.claimed = true;
         
         emit AuctionEnded(_auctionId, auction.highestBidder, auction.highestBid);
     }
 
-
+    /**
+     * @notice buy (fully or partially) tokens from an order
+     * @param _orderId id of the order
+     * @param _buyAmount number of tokens to buy
+     */
     function buy(uint _orderId, uint _buyAmount) external payable nonReentrant {
+        require(_orderId < orderCounter, "Invalid order id");
+
         Order storage order = orders[_orderId];
-        require(_buyAmount > 0, "Invali amount");
+        require(msg.sender != order.owner, "Buyer cannot be owner");
+        require(_buyAmount > 0, "Invalid amount");
         require(_buyAmount <= order.left, "Not enough tokens to buy");
 
         INFT nft = INFT(order.collection);
         uint totalPrice = order.price * _buyAmount;
         uint platformFee = (totalPrice * mpFeesPercentage) / PERCENT_DIVIDER;
         uint recordCompanyFee = (totalPrice * nft.recordCompanyFee()) / PERCENT_DIVIDER;
+
         uint sellerAmount = totalPrice - platformFee - recordCompanyFee;
 
         if (order.paymentToken == address(0)) {
@@ -257,14 +293,14 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
             IERC20(order.paymentToken).safeTransfer(order.owner, sellerAmount);
         }
 
-        IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
+        IERC1155MetadataURI(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, _buyAmount, "");
         order.left -= _buyAmount;
 
         emit OrderFilled(_orderId, msg.sender, _buyAmount);
     }
 
     /**
-     * @dev cancel an order by returning the tokens to the seller.
+     * @notice cancel an order by returning the tokens to the seller.
      * @param _id id of the order to cancel.
      */
     function cancel(uint _id) external {
@@ -273,125 +309,74 @@ contract Marketplace is AccessControl, ReentrancyGuard, IMarketplace {
         Order storage order = orders[_id];
         require(order.owner == msg.sender, "Not token owner");
 
-        IERC1155(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
+        IERC1155MetadataURI(order.collection).safeTransferFrom(address(this), msg.sender, order.tokenId, order.amount, "");
 
         order.left = 0;
 
         emit OrderCancelled(_id);
     }
 
-    // /**
-    //  * @dev builds a prefixed hash to mimic the behavior of eth_sign.
-    //  * @param _string hashed message
-    //  * @return hash prefixed hashed message
-    //  */
-    // function msgHash(string memory _string) public pure returns (bytes32) {
-    //     return keccak256(abi.encodePacked(_string));
-    // }
+    /**
+     * @notice return the orders based on the provided indices 
+     * @param _start starting index (inclusive)
+     * @param _end ending index (exclusive)
+     * @param _owner eventual filter of the orders. If it is equal to address(0), returns all orders
+     */
+    function getOrders(uint _start, uint _end, address _owner) external view returns (Order[] memory, string[] memory, uint) {
+        require(_end <= orderCounter, "Invalid end");
+        require (_start < _end, "Start must be smaller than end");
 
-    // /**
-    //  * @dev builds a prefixed hash to mimic the behavior of eth_sign.
-    //  * @param _hash hashed message
-    //  * @return hash prefixed hashed message
-    //  */
-    // function ethMsgHash(bytes32 _hash) public pure returns (bytes32) {
-    //     return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
-    // }
+        uint effIdx = 0;
+        Order[] memory array = new Order[](_end - _start);
+        string[] memory uris = new string[](_end - _start);
+        
+        for (uint i = _start; i < _end; i++) {
+            Order memory order = orders[i];
+            if ((order.left > 0) && (_owner == address(0) || order.owner == _owner)) {
+                array[effIdx] = order;
+                uris[effIdx] = IERC1155MetadataURI(order.collection).uri(order.tokenId);
+                effIdx++;
+            }
+        }
 
-    // /**
-    //  * @dev recover the original address that signed a prefixed message
-    //  * @param _ethHash prefixed hashed message
-    //  * @param _sig message signature
-    //  * @return address signature signed address
-    //  */
-    // function recover(bytes32 _ethHash, bytes calldata _sig) public pure returns (address) {
-    //     (bytes32 r, bytes32 s, uint8 v) = splitSig(_sig);
-    //     return ecrecover(_ethHash, v, r, s);
-    // }
+        return (array, uris, effIdx);
+    }
 
-    // /**
-    //  * @dev split a signature in r, s, and v components
-    //  * @param _sig message signature
-    //  * @return r signature component
-    //  * @return s signature component
-    //  * @return v signature component
-    //  */
-    // function splitSig(bytes memory _sig) internal pure returns(bytes32 r, bytes32 s, uint8 v) {
-    //     require(_sig.length == 65, "Invalid sig length");
-    //     assembly {
-    //         r := mload(add(_sig, 0x20))
-    //         s := mload(add(_sig, 0x40))
-    //         v := byte(0, mload(add(_sig, 0x60)))
-    //     }
-    //     // return (r,s,v);
-    // }
+    /**
+     * @notice return the auctions based on the provided indices 
+     * @param _start starting index (inclusive)
+     * @param _end ending index (exclusive)
+     * @param _owner eventual filter of the auction. If it is equal to address(0), ignores the owner
+     * @param _bidder eventual filter of the auction. If it is equal to address(0), ignores the highestBidder
+     */
+    function getAuctions(uint _start, uint _end, address _owner, address _bidder) external view returns (Auction[] memory, string[] memory, uint) {
+        require(_end <= auctionCounter, "Invalid end");
+        require (_start < _end, "Start must be smaller than end");
 
-    // /**
-    //  * @dev convert an address to string
-    //  * @param account account to be converted in string
-    //  * @return account account converted in lowercase string
-    //  */
-    // function address2String(address account) public pure returns(string memory) {
-    //     return Strings.toHexString(account);
-    // }
+        uint effIdx = 0;
+        Auction[] memory array = new Auction[](_end - _start);
+        string[] memory uris = new string[](_end - _start);
+        
+        for (uint i = _start; i < _end; i++) {
+            Auction memory auction = auctions[i];
+            if ((!auction.claimed) && (_owner == address(0) || auction.owner == _owner) && (_bidder == address(0) || _bidder == auction.highestBidder)) {
+                array[effIdx] = auction;
+                uris[effIdx] = IERC1155MetadataURI(auction.collection).uri(auction.tokenId);
+                effIdx++;
+            }
+        }
 
-    // /**
-    //  * @dev convert an uint to string
-    //  * @param value value to be converted in string
-    //  * @return value value converted in lowercase string
-    //  */
-    // function value2String(uint value) public pure returns(string memory) {
-    //     return Strings.toString(value);
-    // }
-
-    // /**
-    //  * @dev convert an order structure to string
-    //  * @param _order order struct to be converted in string
-    //  * @return originalMsg order converted in lowercase string
-    //  */
-    // function restoreMsg(Order calldata _order) public pure returns (string memory) {
-    //     string memory originalMsg = string.concat(value2String(_order.orderId), address2String(_order.paymentToken), value2String(_order.price), value2String(_order.amount),
-    //             value2String(_order.tokenId), address2String(_order.owner), address2String(_order.collection));
-    //     return originalMsg;
-    // }
-
-    
-    // INTERNAL METHODS
-    // /**
-    //  * @notice process native token payment
-    //  * @param _price price to be paid
-    //  * @param _seller seller address
-    //  */
-
-    // /**
-    //  * @notice process other tokens payment
-    //  * @param _token payment token address
-    //  * @param _price price to be paid
-    //  * @param _seller seller address
-    //  */
-    // function processPayment(address _token, uint _price, address _seller) internal {
-    //     IERC20(_token).safeTransferFrom(_msgSender(), address(this), _price);
-
-    //     // Fees
-    //     uint platformFee;
-    //     if (mpFeesPercentage > 0) {
-    //         platformFee = _price * mpFeesPercentage / PERCENT_DIVIDER;
-    //         // process fee payment
-    //         IERC20(_token).safeTransfer(mpFeesCollector, platformFee);
-    //     }
-
-    //     // transfer payment
-    //     uint sellerAmount = _price - platformFee;
-    //     IERC20(_token).safeTransfer(_seller, sellerAmount);
-    // }
-
-    function onERC1155Received(address, address, uint, uint, bytes calldata) external pure returns (bytes4) {
-        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+        return (array, uris, effIdx);
     }
 
     // Internal function to process ETH payments
     function processPaymentETH(address _to, uint _amount, string memory _error) internal {
         (bool success, ) = address(_to).call{value: _amount}("");
         require(success, _error);
+    }
+
+    // Enables this smart contract to receive ERC1155 tokens
+    function onERC1155Received(address, address, uint, uint, bytes calldata) external pure returns (bytes4) {
+        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
     }
 }

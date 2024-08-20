@@ -1,14 +1,16 @@
-import React from 'react'
-import MintComponent from '@/components/createNFT/mint';
-import Navbar from '@/components/navbar/page';
+import Navbar from "@/components/navbar/page";
+import MultiStepCampaign from "../../components/createNFT/components/multi-step-campaign";
 
-function page() {
-  return (
-    <div>
-        <Navbar/>
-        <MintComponent />
-    </div>
-  )
-}
+const Campaign = () => {
+	return (
+		<div>
+			<Navbar/>
+		<div className="flex flex-col w-full min-h-screen items-center justify-center">
+      
+			<MultiStepCampaign />
+		</div>
+		</div>
+	);
+};
 
-export default page
+export default Campaign;

@@ -49,7 +49,7 @@ const anvil = {
 export const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: 'YOUR_PROJECT_ID',
-  chains: [polygonAmoy, anvil, sepolia],
+  chains: [polygonAmoy],
 });
 
 const queryClient = new QueryClient();

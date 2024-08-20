@@ -11,23 +11,34 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-import {deploy} from "../schema/deploy"
+import {deploy} from "@/backend/schema/deploy"
 import { useForm } from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {z} from "zod"
-import { ethers, providers, Signer } from 'ethers';
-import {abi as FactoryAbi} from "../../contracts/out/NFTFactory.sol/NFTFactory.json"
+import { ethers, providers} from 'ethers';
+import {abi as FactoryAbi} from "@/contracts/out/NFTFactory.sol/NFTFactory.json"
 
 
 
 
 
-function page() {
+function Page() {
 
   const [loading, setLoading] = useState(false)
+  const [cid, setCid] = useState("");
+
 
   const form = useForm({
     resolver: zodResolver(deploy),
@@ -35,29 +46,31 @@ function page() {
       recordName: "",
       recordAddress:"",
       recordTreasury:"",
+      initialFee:0,
     }
   })
 
-  const onSubmit = (data: z.infer<typeof deploy>)=>{
+  const onSubmit = async (data: z.infer<typeof deploy>)=>{
+    
     setLoading(true)
     const provider = new providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
-    const contract = new ethers.Contract("0x995AC5Be6Fff1ffB0707147090642041e06d6928", FactoryAbi, signer);
-
-    async function prova(){
+    const contract = new ethers.Contract(process.env.NEXT_PUBLIC_NFT_FACTORY_ADDRESS || "", FactoryAbi, signer);
+    const percentage = ethers.utils.parseUnits(data.initialFee.toString(), 4).toString()
+    console.log(percentage)
       try{
-      const tx = await contract.deployNFT(data.recordName,data.recordAddress,data.recordTreasury)
+      const tx = await contract.deployNFT(data.recordName,data.recordAddress,data.recordTreasury, percentage)
       await tx.wait()
       console.log(tx.hash)
       setLoading(false)
+      location.reload();
       }catch{
-        alert("nuuuuuuu")
+        alert("whitelisted")
         setLoading(false)
       }
+    
     }
-    prova()
-
-  }
+  
 
 
   return (
@@ -68,6 +81,8 @@ function page() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="spacce-y-6">
             <div className='space-y-4'>
+
+
                 <FormField
 
                 control={form.control}
@@ -115,6 +130,21 @@ function page() {
                 )}
                 
                 />
+              <FormField
+
+                control={form.control}
+                name="initialFee"
+                render={({field})=>(
+                    <FormItem>
+                      <FormLabel>Royalty %</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="initialFee" placeholder='10'/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                
+                />  
                 
             </div>
             <div className='my-2'>
@@ -132,4 +162,4 @@ function page() {
   )
 }
 
-export default page
+export default Page

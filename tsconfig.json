@@ -18,10 +18,19 @@
         "name": "next"
       }
     ],
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "baseUrl": ".",
+  "paths": {
+    "@/components/*": ["components/*"],
+    "@/lib/*": ["lib/*"], //any other root-level paths
+    "@/contracts/*": ["contracts/*"],
+    "@/backend/*": ["backend/*"], 
+    "@/api/*": ["api/*"], 
+    "@/app/*": ["app/*"], 
+    "@/utilis/*": ["utilis/*"], 
+    "@/context/*": ["context/*"], 
+    
+  }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/home/home.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/home/home.jsx", "components/NftCardV2/NFTcardTwo.jsx", "components/NFTcardDetails/NFTDescription/NFTDescription.jsx"],
   "exclude": ["node_modules"]
 }

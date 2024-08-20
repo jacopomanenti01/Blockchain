@@ -16,6 +16,7 @@
     background-color: whitesmoke;
     border-color: black;
     border-width: .1rem;
+    width: 300px; 
 }
 
 .NFTCardTwo_box:hover{
@@ -67,7 +68,10 @@
 }
 
 .NFTCardTwo_box_info_left{
-    line-height: 0;
+    display: flex;
+    flex-direction: column; /* This aligns the children in a vertical column */
+    align-items: flex-start; /* Aligns children to the start of the div (left side) */
+    line-height: normal; /* Adjust line height if needed */
 }
 
 .NFTCardTwo_box_info small{
@@ -77,6 +81,11 @@
 .NFTCardTwo_box_info_left p{
     font-size: 2rem;
     font-weight: 900;
+    word-wrap: break-word; /* Ensure long words are wrapped to the next line if necessary */
+    overflow-wrap: break-word; /* Modern equivalent to handle word breaking */
+    white-space: normal; /* Allow the text to wrap */
+    line-height: 1.2; /* Adjust line height for readability */
+    
 } 
 
 .NFTCardTwo_box_price{
@@ -87,16 +96,19 @@
     padding: 1rem;
 }
 
-.NFTCardTwo_box_price_box p{
-    border:  1px solid grey;
+.NFTCardTwo_box_price_box p {
+    border: 1px solid grey;
     padding: 1.5rem 1rem 1rem 1rem;
     margin-top: .5rem;
     border-radius: .3rem;
-    display: flex;
-    align-items: center;
-    
+    white-space: normal;       /* Ensures that text wraps normally */
+    word-wrap: break-word;     /* Ensures long words are broken to fit within the container */
+    overflow-wrap: break-word; /* Provides broader support for breaking long words */
+    font-size: .7rem;   
+    text-align: center;        /* Centers the text */
 
 }
+
 
 .NFTCardTwo_box_price_box small{
     background-color:  rgb(16, 16, 85);

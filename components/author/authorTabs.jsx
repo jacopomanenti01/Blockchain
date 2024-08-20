@@ -9,20 +9,13 @@ import Style from "./authorTabs.module.css";
 const AuthorTaps = ({
   setCollectiables,
   setCreated,
-  setLike,
-  setFollower,
-  setFollowing,
+  setAuction,
+  
 }) => {
   const [openList, setOpenList] = useState(false);
   const [activeBtn, setActiveBtn] = useState(1);
   const [selectedMenu, setSelectedMenu] = useState("Most Recent");
 
-  const listArray = [
-    "Created By Admin",
-    "Most Appreciated",
-    "Most Discussed",
-    "Most Viewed",
-  ];
 
  
 
@@ -32,17 +25,19 @@ const AuthorTaps = ({
     if (btnText == "Listed") {
       setCollectiables(true);
       setCreated(false);
-      setFollower(false);
-      setFollowing(false);
-      setLike(false);
+      setAuction(false);
       setActiveBtn(1);
-    } else if (btnText == "Created") {
+    } else if (btnText == "Owned") {
       setCollectiables(false);
       setCreated(true);
-      setFollower(false);
-      setFollowing(false);
-      setLike(false);
+      setAuction(false);
       setActiveBtn(2);
+    } 
+    else if (btnText == "Auction") {
+      setCollectiables(false);
+      setCreated(false);
+      setAuction(true);
+      setActiveBtn(3);
     } 
   };
 
@@ -61,9 +56,14 @@ const AuthorTaps = ({
               className={`${activeBtn == 2 ? Style.active : ""}`}
               onClick={(e) => openTab(e)}
             >
-              Created
+              Owned
             </button>
-            
+            <button
+              className={`${activeBtn == 3 ? Style.active : ""}`}
+              onClick={(e) => openTab(e)}
+            >
+              Auction
+            </button>
             
           </div>
         </div>

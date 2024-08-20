@@ -47,6 +47,16 @@ contract NFTTest is Test {
         vm.stopPrank();
     }
 
+    function test_SingerCreationWithSameName() public {
+        vm.startPrank(recordCompanyAdmin);
+
+        nft.createSinger("Name", "Desc", "Genre", "https://...");
+        vm.expectRevert();
+        nft.createSinger("Name", "Desc2", "Genre2", "https://...");
+
+        vm.stopPrank();
+    }
+
     function test_SingerGetter() public {
         vm.startPrank(recordCompanyAdmin);
 
@@ -74,6 +84,18 @@ contract NFTTest is Test {
     function test_SingerGetterAccess() public {
         vm.expectRevert();
         nft.getSingers(0, 100);
+
+    
+        vm.startPrank(recordCompanyAdmin);
+
+        uint sharesCount = 100;
+        nft.createSinger("Name", "Desc", "Genre", "https://...");
+        nft.createAlbum(sharesCount, 0, "https://...");
+
+        vm.expectRevert();
+        nft.getSingers(1, 0);
+
+        vm.stopPrank();
     }
 
     function test_AlbumCreationAccess() public {
