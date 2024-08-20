@@ -104,7 +104,11 @@
     white-space: normal;       /* Ensures that text wraps normally */
     word-wrap: break-word;     /* Ensures long words are broken to fit within the container */
     overflow-wrap: break-word; /* Provides broader support for breaking long words */
+    font-size: .7rem;   
+    text-align: center;        /* Centers the text */
+
 }
+
 
 .NFTCardTwo_box_price_box small{
     background-color:  rgb(16, 16, 85);
