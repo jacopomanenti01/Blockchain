@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 //INTERNAL IMPORT
 import Style from "./NFTcardTwo.module.css";
 import { Button } from "../ui/button";
-import {Web3DataContext} from "@/app/author/page"
+import { Web3DataContext } from '@/context/Web3DataContext'; // Update the path accordingly
 import {fetchImage} from "@/utilis/Fetch"
 
 
@@ -19,7 +19,6 @@ interface FormContext {
   tokenID: number
   balance: number
   creator: string
-
 }
 
 const initialFormData: FormContext = {

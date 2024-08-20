@@ -5,7 +5,7 @@ import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { GiMicrophone } from "react-icons/gi";
 import RemoveButton from "@/components/NftCardV2/RemoveButton"
 import { useRouter } from 'next/navigation';
-import {Web3DataContext} from "@/app/author/page"
+import { Web3DataContext } from '@/context/Web3DataContext'; // Update the path accordingly
 import { ethers} from 'ethers';
 
 //INTERNAL IMPORT

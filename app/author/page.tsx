@@ -12,6 +12,7 @@ import { abi as NFTFactoryAbi } from "@/contracts/out/NFTFactory.sol/NFTFactory.
 import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
 import { abi as NFTMarketplace } from "@/contracts/out/Marketplace.sol/Marketplace.json"
 import { BigNumber } from 'ethers';
+import { Web3DataContext } from '@/context/Web3DataContext'; // Update the path accordingly
 
 import {fetchFromIPFS} from "@/utilis/Fetch"
 
@@ -29,25 +30,7 @@ year: number
 id: number[]
 };
 
-type Web3Data = {
-  address: string | null | undefined;
-  signer: ethers.Signer | null;
-  provider: ethers.providers.Web3Provider | null;
-  marketplace: ethers.Contract | null;
-  addressRecord: string | null;
-  contractRecord: ethers.Contract | null;
-};
 
-const initialFormData: Web3Data = {
-  address: null,
-  signer: null,
-  provider: null,
-  marketplace: null,
-  addressRecord: "",
-  contractRecord: null,
-};
-
-export const Web3DataContext = React.createContext<Web3Data>(initialFormData);
 
 function Page() {
   const { address, isConnected } = useAccount();
@@ -152,7 +135,6 @@ function Page() {
             const end = await web3contract.nextNFTId();
             const end_format = parseInt(end.toString(), 10);
             const res = await web3contract.batchGetNFTs(address, 0, end_format, 10);
-            console.log("my nfts", res)
             
              // create control variables
              let tokenOwned = [];
@@ -191,7 +173,6 @@ function Page() {
             const numberOrders = await marketpalce_contract.orderCounter()
             const numberOrders_format = parseInt(numberOrders.toString(), 10);
             const orders = await marketpalce_contract.getOrders(0, numberOrders_format, address);
-            console.log(orders)
 
             // create control variables
             let tokenOrder = [];
@@ -201,7 +182,6 @@ function Page() {
             let effIdx  = BigNumber.from(orders[2]).toNumber();
             let orderPrice = [];
             let collectionAddress :string[] = []
-            console.log(effIdx)
 
             //extract values for each variable
 
@@ -246,7 +226,6 @@ function Page() {
             const numberAuction = await marketpalce_contract.auctionCounter()
             const numberAuction_format = parseInt(numberAuction.toString(), 10);
             const auctions = await marketpalce_contract.getAuctions(0, numberAuction_format, address, "0x0000000000000000000000000000000000000000");
-            console.log("auctions", auctions)
 
             // create control variables
             let tokenAuction = [];
@@ -378,6 +357,8 @@ function Page() {
     useEffect(() => {
     
       const fetchDataFromIPFS = async () => {
+        let updateAuction = []
+
         for (let i = 0; i < nftsUriAuction.length; i++) {
           const nftUri = nftsUriAuction[i];
           const cid = nftUri.split("/").pop();
@@ -393,24 +374,19 @@ function Page() {
             data.deadline = deadline[i]
             data.collection = collectionAuction[i]
 
-            console.log(data)
+            updateAuction[i] = data
   
-            if(data.balance){
-              setnftsJSONAuction((prevdata) => {
-                return uniqueById([...prevdata, data]);
-              });
-          }
+            
           }
         }
-      };
-  
+          setnftsJSONAuction(updateAuction)
+      }
       if (nftsUriAuction.length > 0 && tokenIDAuction.length >0) {
         fetchDataFromIPFS();
         
       }
     }, [nftsUriAuction, tokenIDAuction]);
 
-    useEffect(()=>{console.log("ooooo",nftsJSONAuction)},[nftsJSONAuction])
   
   // prevent json duplicates 
   function uniqueById(items:any) {

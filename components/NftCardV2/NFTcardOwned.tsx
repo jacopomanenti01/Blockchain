@@ -13,7 +13,7 @@ import { ethers} from 'ethers';
 //INTERNAL IMPORT
 import Style from "./NFTcardTwo.module.css";
 import { Button } from "../ui/button";
-import {Web3DataContext} from "@/app/author/page"
+import { Web3DataContext } from '@/context/Web3DataContext'; // Update the path accordingly
 import {fetchImage} from "@/utilis/Fetch"
 
 

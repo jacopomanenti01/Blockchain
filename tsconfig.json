@@ -27,6 +27,8 @@
     "@/api/*": ["api/*"], 
     "@/app/*": ["app/*"], 
     "@/utilis/*": ["utilis/*"], 
+    "@/context/*": ["context/*"], 
+    
   }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/home/home.jsx", "components/NftCardV2/NFTcardTwo.jsx", "components/NFTcardDetails/NFTDescription/NFTDescription.jsx"],

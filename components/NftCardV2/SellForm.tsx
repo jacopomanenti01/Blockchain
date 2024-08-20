@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation";
 import {sell} from "@/backend/schema/deploy"
 import {Context} from "./SellButton"
 import {TokenContext} from "./NFTcardTwo"
-import {Web3DataContext} from "@/app/author/page"
+import { Web3DataContext } from '@/context/Web3DataContext'; // Update the path accordingly
 import { abi as GenericERC20  } from "@/contracts/out/GenericERC20.sol/GenericERC20.json";
 import { abi as NFTAbi } from "@/contracts/out/NFT.sol/NFT.json"
 import { ethers} from 'ethers';
@@ -46,7 +46,7 @@ import { ethers} from 'ethers';
 
 
 
-function SellForm({setter}) {
+function SellForm({setter}:any) {
 
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useContext(Context)
