@@ -39,7 +39,7 @@ export const Context = React.createContext()
             put up for auction your NFT</DialogTitle>
 
             <DialogDescription>
-              Click one of the two button below to sell or list your album's royalties.
+              Click one of the two button below to sell or list your album.
             </DialogDescription>
           </DialogHeader>
 

@@ -1,4 +1,5 @@
 "use client"
+
 import React, { useState, useEffect } from 'react'
 import AuthorProfileCard from "../../components/author/authorPage"
 import AuthorTaps from "../../components/author/authorTabs"
@@ -29,24 +30,24 @@ id: number[]
 };
 
 type Web3Data = {
-  address: string |null |undefined,
-  signer : ethers.Signer | null,
-  provider: ethers.providers.Web3Provider | null,
-  marketplace: ethers.Contract | null,
-  addressRecord: string | null,
-  contractRecord: ethers.Contract | null,
-}
+  address: string | null | undefined;
+  signer: ethers.Signer | null;
+  provider: ethers.providers.Web3Provider | null;
+  marketplace: ethers.Contract | null;
+  addressRecord: string | null;
+  contractRecord: ethers.Contract | null;
+};
 
 const initialFormData: Web3Data = {
   address: null,
-  signer : null,
+  signer: null,
   provider: null,
   marketplace: null,
   addressRecord: "",
   contractRecord: null,
 };
 
-export const Web3DataContext = React.createContext<Web3Data>(initialFormData)
+export const Web3DataContext = React.createContext<Web3Data>(initialFormData);
 
 function Page() {
   const { address, isConnected } = useAccount();
@@ -123,7 +124,9 @@ function Page() {
               setName(getName || "");
             } catch (error) {
               console.error("Error fetching name:", error);
+              if(address){
               setName(address);
+             }
             }
             
             setcontractRecord(record_contract);

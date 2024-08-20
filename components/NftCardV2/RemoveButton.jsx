@@ -37,7 +37,7 @@ export const Context = React.createContext()
             <DialogTitle>Remove your NFT from Marketplace</DialogTitle>
 
             <DialogDescription>
-              Fill the form to remove your album's royalties from  Marketplace.
+              Fill the form to remove your album from  Marketplace.
             </DialogDescription>
           </DialogHeader>
 

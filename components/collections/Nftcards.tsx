@@ -26,7 +26,7 @@ function Tutorial() {
               <div className="space-y-4 text-center">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">How It Works</h2>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Our platform simplifies the exchange of album royalties and the deployment of your nft album. Here’s how it works.
+                Our platform simplifies the exchange of album royalties and the deployment of your nft album. Here is how it works.
                 </p>
               </div>
               <div className="grid gap-6 py-8 md:grid-cols-2 lg:grid-cols-3">
@@ -42,7 +42,7 @@ function Tutorial() {
                     <MdAlbum className="h-6 w-6" />
                   </div>
                   <h3 className="mb-2 text-xl font-semibold">Mint your album</h3>
-                  <p className="text-muted-foreground">If you are a whitelisted record company, click on "mint" section and fill the dedicated form.</p>
+                  <p className="text-muted-foreground">If you are a whitelisted record company, click on Mint section and fill the dedicated form.</p>
                 </div>
                 <div className="rounded-lg border p-6 shadow-sm transition-all duration-300 hover:shadow-md">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -50,7 +50,7 @@ function Tutorial() {
                   </div>
                   <h3 className="mb-2 text-xl font-semibold">Fill the form</h3>
                   <p className="text-muted-foreground">
-                  In the "Mint" section, simply fill out the forms with a few clicks to create your artist profile and associated album. Set the desired royalt amount for your album. Once complete, your album will be securely deployed to our infrastructure. The royalty percentage for each sale will match the amount you specified during the whitelisting process.                  </p>
+                  In the Mint section, simply fill out the forms with a few clicks to create your artist profile and associated album. Set the desired royalt amount for your album. Once complete, your album will be securely deployed to our infrastructure. The royalty percentage for each sale will match the amount you specified during the whitelisting process.                  </p>
                 </div>
                 <div className="rounded-lg border p-6 shadow-sm transition-all duration-300 hover:shadow-md">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -65,7 +65,7 @@ function Tutorial() {
                   </div>
                   <h3 className="mb-2 text-xl font-semibold">Explore the marketplace</h3>
                   <p className="text-muted-foreground">
-                  Navigate to the "Listing" section to explore the latest featured albums in our marketplace. Start trading the associated royalties with our seamless service.
+                  Navigate to the Listing section to explore the latest featured albums in our marketplace. Start trading the associated royalties with our seamless service.
                   </p>
                 </div>
                 <div className="rounded-lg border p-6 shadow-sm transition-all duration-300 hover:shadow-md">
@@ -74,7 +74,7 @@ function Tutorial() {
                   </div>
                   <h3 className="mb-2 text-xl font-semibold">See album details</h3>
                   <p className="text-muted-foreground">
-                  Click on an album's card to view details such as the release year, genre, related songs, and the specific royalties associated with it.                  </p>
+                  Click on an album card to view details such as the release year, genre, related songs, and the specific royalties associated with it.                  </p>
                 </div>
               </div>
             </div>
