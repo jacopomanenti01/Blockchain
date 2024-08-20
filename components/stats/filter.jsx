@@ -86,6 +86,7 @@ export default function Component() {
           price: formatEther(orders[i].price),
           orderID: i,
           collection: orders[i].collection,
+          owner: shortenAddress(orders[i].owner),
           type: "buy",
           genre: metadata.genre
         })
@@ -122,6 +123,7 @@ export default function Component() {
           price: formatEther(auctions[i].highestBid),
           auctionID: i,
           collection: auctions[i].collection,
+          owner: shortenAddress(orders[i].owner),
           deadline: formattedDeadline,
           type: "bid",
           genre: metadata.genre
@@ -157,6 +159,10 @@ export default function Component() {
   const handleCardClickAuction = (collection , id, auction) => {
     router.push(`/NFTdetails/${collection}/${id}?auction=${auction}`);
   };
+
+  function shortenAddress(address) {
+    return `${address.slice(0, 7)}...${address.slice(-5)}`;
+  }
 
 
   const filteredNfts = useMemo(() => {
@@ -359,6 +365,7 @@ export default function Component() {
                 </Link>
                 <CardContent className="p-4">
                   <h3 className="text-lg font-semibold mb-2">{nft.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Owner: {nft.owner}</p>
                   <p className="text-sm text-muted-foreground mb-4">{nft.type}</p>
                   {nft.type === 'bid' && (
                     <p className="text-sm text-muted-foreground mb-4">

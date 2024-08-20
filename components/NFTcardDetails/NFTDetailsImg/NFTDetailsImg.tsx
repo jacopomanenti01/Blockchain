@@ -146,11 +146,11 @@ const NFTDetailsImg = ( {descr, image, address,id, royalties, songs, genre}: any
                 <p>
                   <small>
                   <HoverCard>
-                  Royalties: {ethers.utils.formatUnits(royalties.toString(), 5)} % 
+                  Royalties: {ethers.utils.formatUnits(royalties.toString(), 4)} % 
                  
                     <HoverCardTrigger><IoMdInformationCircleOutline /> </HoverCardTrigger>
                       <HoverCardContent>
-                      Percentage of Album Earnings for Royalty Packag
+                      Percentage of Album Earnings for Royalty Package
                       </HoverCardContent>
                   </HoverCard>
 
