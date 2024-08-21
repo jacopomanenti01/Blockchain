@@ -12,6 +12,12 @@ First, clone this repository. Then, install the dependencies:
 npm install
 ```
 
+Next, you have to create (and eventually modify with your deployed smart contracts) your .env file:
+
+```bash
+cp .env.example .env
+```
+
 Lastly, start the development server:
 
 ```bash
