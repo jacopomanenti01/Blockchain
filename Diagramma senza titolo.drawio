@@ -1,92 +1,48 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" version="24.7.7">
-  <diagram name="Pagina-1" id="CV3m6Ttj9oZ78XBdrQQR">
+  <diagram name="Pagina-1" id="EiL_qrAfyv7YwIQUWh2J">
     <mxGraphModel>
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" value="Our platform" style="rounded=1;absoluteArcSize=1;arcSize=14;whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry y="227" width="108" height="33" as="geometry" />
+        <mxCell id="2" value="&lt;&lt;contract&gt;&gt;&#xa;FactoryContract" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40.349998474121094;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="8" y="8" width="484" height="169" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="Polygon network" style="ellipse;aspect=fixed;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="745" y="177" width="134" height="134" as="geometry" />
+        <mxCell id="3" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" vertex="1" parent="2">
+          <mxGeometry y="40" width="484" height="8" as="geometry" />
         </mxCell>
-        <mxCell id="4" value="Low transaction fees" style="ellipse;aspect=fixed;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="985" y="54" width="164" height="164" as="geometry" />
+        <mxCell id="4" value="-deployNFT(name: string, symbol: string, owner: address) : : NFT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="2">
+          <mxGeometry y="48" width="484" height="27" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="Fast processing times" style="ellipse;aspect=fixed;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="982" y="268" width="168" height="168" as="geometry" />
+        <mxCell id="5" value="-updateOwner(nft: NFT, newOwner: address) : : void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="2">
+          <mxGeometry y="75" width="484" height="27" as="geometry" />
         </mxCell>
-        <mxCell id="6" value="Smart Contracts" style="rhombus;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="339" y="53" width="164" height="164" as="geometry" />
+        <mxCell id="6" value="-addRecordCompany(nft: NFT, company: string) : : void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="2">
+          <mxGeometry y="102" width="484" height="27" as="geometry" />
         </mxCell>
-        <mxCell id="7" value="Layer 2 Solutions" style="rhombus;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="335" y="267" width="170" height="170" as="geometry" />
+        <mxCell id="7" value="-removeRecordCompany(nft: NFT, company: string) : : void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="2">
+          <mxGeometry y="129" width="484" height="27" as="geometry" />
         </mxCell>
-        <mxCell id="8" value="Polygon SDK" style="rhombus;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="353" y="487" width="135" height="135" as="geometry" />
+        <mxCell id="8" value="&lt;&lt;contract&gt;&gt;&#xa;NFT" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40.349998474121094;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="151" y="227" width="198" height="169" as="geometry" />
         </mxCell>
-        <mxCell id="9" value="Built on" style="curved=1;startArrow=none;endArrow=block;exitX=0.61;exitY=0;entryX=0.1;entryY=0;" edge="1" parent="1" source="2" target="3">
+        <mxCell id="9" value="- name: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="8">
+          <mxGeometry y="27" width="198" height="27" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="- symbol: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="8">
+          <mxGeometry y="54" width="198" height="27" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="- owner: address" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="8">
+          <mxGeometry y="81" width="198" height="27" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="- recordCompanies: array" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="8">
+          <mxGeometry y="108" width="198" height="27" as="geometry" />
+        </mxCell>
+        <mxCell id="13" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" vertex="1" parent="8">
+          <mxGeometry y="134" width="198" height="13" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="" style="curved=1;startArrow=none;endArrow=open;endSize=12;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="2" target="8">
           <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="222" y="9" />
-              <mxPoint x="625" y="9" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="10" value="Ensures" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.04;entryX=0;entryY=0.5;" edge="1" parent="1" source="3" target="4">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="930" y="136" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="11" value="Ensures" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.95;entryX=0;entryY=0.5;" edge="1" parent="1" source="3" target="5">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="930" y="352" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="12" value="Key technologies include" style="curved=1;startArrow=none;endArrow=block;exitX=0.74;exitY=0;entryX=0;entryY=0.5;" edge="1" parent="1" source="2" target="6">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="222" y="135" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="13" value="Key technologies include" style="curved=1;startArrow=none;endArrow=block;exitX=0.74;exitY=1.01;entryX=0;entryY=0.5;" edge="1" parent="1" source="2" target="7">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="222" y="352" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="14" value="Key technologies include" style="curved=1;startArrow=none;endArrow=block;exitX=0.58;exitY=1.01;entryX=0;entryY=0.5;" edge="1" parent="1" source="2" target="8">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="222" y="555" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="15" value="Enable" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.21;" edge="1" parent="1" source="6" target="3">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="625" y="135" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="16" value="Enhance" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.79;" edge="1" parent="1" source="7" target="3">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="625" y="352" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="17" value="Facilitate integration with" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0.2;entryY=1;" edge="1" parent="1" source="8" target="3">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="625" y="555" />
-            </Array>
+            <Array as="points" />
           </mxGeometry>
         </mxCell>
       </root>
