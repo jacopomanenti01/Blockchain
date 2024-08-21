@@ -29,6 +29,8 @@ forge test
 
 ## How to deploy
 In order to deploy the whole setup, you have to first create a .env file and fill it.
+Note that the BUYER_PRIVATE_KEY environment variable is needed only if you want to use the [DeployAndTest script](./script/DeployAndTest.s.sol) and the [DeplyerOnlyMarketplace script](./script/DeployerOnlyMarketplace.s.sol) must be adjusted manually before every deployment.
+For the full [full deployment script](./script/Deployer.s.sol) no manual changes are needed apart from the .env file.
 
 ```bash
 cp .env.example .env
