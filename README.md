@@ -59,4 +59,4 @@ The smart contracts can be found in the [contracts folder](./contracts), alongsi
 
 ## Report - Presentation
 
-The report can be found [here](./Project Report.pdf) or [on Overleaf](https://www.overleaf.com/read/zfqrtfgcpvtg#4bb9ce).  
+The report can be found [here](./Project%20Report.pdf) or [on Overleaf](https://www.overleaf.com/read/zfqrtfgcpvtg#4bb9ce).  
