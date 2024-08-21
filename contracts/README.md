@@ -5,6 +5,27 @@ Additionally, a dedicated smart contract for the marketplace has been developed.
 
 Documentation for each function has been added following the NatSpec format.
 
+## Dependencies
+
+These smart contracts use the OpenZeppelin v5 library, especially for access control, reentrancy guards, ERC20 and ERC1155 token standards.
+
+## Local development
+
+In order to develop locally, you can start a local node with anvil by running:
+```bash
+anvil
+```
+
+This will start a node reachable at `http://127.0.0.1:8545`
+
+## Test
+
+Each smart contract has been thoroughly tested by using the fuzzing feature of Foundry.
+All tests can be found in the [test folder](./test) and can be executed by running:
+```bash
+forge test
+```
+
 ## How to deploy
 In order to deploy the whole setup, you have to first create a .env file and fill it.
 

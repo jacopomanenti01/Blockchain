@@ -51,6 +51,7 @@ Once a record company has obtained the music rights, it can sell them by either:
 ## Deployment on Vercel
 
 This project has been deployed on Vercel and can be tested [here](https://blockchain-one-bice.vercel.app/).
+It is linked to the smart contracts deployed on Amoy, Polygon's official testnet. The addresses can be found [here](./contracts) in the deployments section.
 
 ## Smart contracts
 
