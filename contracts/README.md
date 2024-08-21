@@ -3,7 +3,7 @@
 In EasyMusic, a record company is represented by a NFT, which is implemented using the ERC1155 token standard in order to have multiple copies of the same token. To facilitate the operations in the DApp, the factory pattern has been used. In fact, the DApp interacts mainly with the NFTFactory smart contract, which is in charge of deploying new record companies (NFT smart contract).
 Additionally, a dedicated smart contract for the marketplace has been developed. In particular, it contains the logic for the orders and the auctions.
 
-Documentation for each function has been added following the NatSpec format.
+Documentation for each function has been added following the NatSpec format and can be found [here](./docs/src/SUMMARY.md).
 
 ## Dependencies
 
