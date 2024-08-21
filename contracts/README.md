@@ -7,7 +7,8 @@ Documentation for each function has been added following the NatSpec format and 
 
 ## Dependencies
 
-These smart contracts use the OpenZeppelin v5 library, especially for access control, reentrancy guards, ERC20 and ERC1155 token standards.
+We use Foundry to develop these smart contracts. If it's not installed on your system, please install it using the [official documentation](https://getfoundry.sh/) before proceeding.
+These smart contracts use the OpenZeppelin v5 library, especially for access control, reentrancy guards, ERC20 and ERC1155 token standards. 
 
 ## Local development
 
